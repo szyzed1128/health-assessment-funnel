@@ -39,10 +39,10 @@ h1 { margin: 20px 0 32px; font-size: 32px; line-height: 1.15; }
 .result-summary strong, .result-details strong { color: #507866; }
 .result-summary span, .result-details span { text-align: right; overflow-wrap: anywhere; }
 .bmi-gauge { margin: 0 0 24px; padding: 16px 0; border-bottom: 1px solid #e3ece7; }
-.bmi-gauge-heading, .bmi-scale-labels { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.bmi-gauge-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .bmi-gauge-heading strong { color: #507866; }
 .bmi-gauge-heading span { color: #17221f; font-weight: 700; }
-.bmi-scale { position: relative; display: grid; grid-template-columns: 17.3% 21.2% 15.4% 46.1%; height: 12px; margin: 14px 0 8px; overflow: visible; border-radius: 6px; }
+.bmi-scale { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); height: 12px; margin: 14px 0 8px; overflow: visible; border-radius: 6px; }
 .bmi-segment:first-child { border-radius: 6px 0 0 6px; }
 .bmi-segment:nth-child(4) { border-radius: 0 6px 6px 0; }
 .bmi-low { background: #f5c84b; }
@@ -50,7 +50,11 @@ h1 { margin: 20px 0 32px; font-size: 32px; line-height: 1.15; }
 .bmi-high { background: #f59e0b; }
 .bmi-very-high { background: #d92d20; }
 .bmi-marker { position: absolute; top: 50%; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; background: #17221f; box-shadow: 0 2px 8px rgba(23, 34, 31, 0.25); transform: translate(-50%, -50%); }
-.bmi-scale-labels { color: #617069; font-size: 12px; }
+.bmi-scale-labels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: baseline; gap: 0; font-size: 12px; font-weight: 700; text-align: center; }
+.bmi-scale-labels span:nth-child(1) { color: #9a6b00; }
+.bmi-scale-labels span:nth-child(2) { color: #2f855a; }
+.bmi-scale-labels span:nth-child(3) { color: #b86b00; }
+.bmi-scale-labels span:nth-child(4) { color: #b42318; }
 .bmi-note { margin: 10px 0 0; color: #617069; font-size: 13px; line-height: 1.5; }
 .goal-resolution-notice { margin: -12px 0 20px; padding: 18px 16px; border: 1px solid #e7c98b; border-left: 4px solid #c58b18; border-radius: 6px; background: #fffaf0; color: #5b481e; line-height: 1.5; }
 .goal-resolution-notice p { margin: 8px 0 16px; }

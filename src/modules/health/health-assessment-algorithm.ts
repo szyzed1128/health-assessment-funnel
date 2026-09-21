@@ -96,7 +96,6 @@ const bmiHealthyLowerBound = 18.5;
 const bmiHealthyUpperBound = 24;
 
 export function normalizeGoal(value: unknown): Goal | null {
-  if (value === "improve_fitness") return "gain_weight";
   if (value === "lose_weight" || value === "maintain_weight" || value === "gain_weight") {
     return value;
   }

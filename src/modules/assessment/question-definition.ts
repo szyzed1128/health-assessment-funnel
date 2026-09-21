@@ -15,7 +15,7 @@ export const questionDefinitions = {
     required: true,
     answerType: "SINGLE_SELECT",
     schema: z
-      .enum(["lose_weight", "maintain_weight", "gain_weight", "improve_fitness"])
+      .enum(["lose_weight", "maintain_weight", "gain_weight"])
       .transform((value) => normalizeGoal(value)!),
   },
   age: {

@@ -851,8 +851,7 @@ function getDateInputBounds(parts: DateParts, minDateInput: string, maxDateInput
 }
 
 function BmiGauge({ bmi }: { bmi: number }) {
-  const clampedBmi = Math.min(Math.max(bmi, 14), 40);
-  const markerPosition = ((clampedBmi - 14) / 26) * 100;
+  const markerPosition = getBmiMarkerPosition(bmi);
 
   return (
     <section aria-label="BMI 区间" className="bmi-gauge">
@@ -876,6 +875,23 @@ function BmiGauge({ bmi }: { bmi: number }) {
       <p className="bmi-note">BMI 是成人常用筛查指标，不等同于医疗诊断。</p>
     </section>
   );
+}
+
+const bmiVisualSegments = [
+  { min: 14, max: 18.5, startPercent: 0, widthPercent: 25 },
+  { min: 18.5, max: 24, startPercent: 25, widthPercent: 25 },
+  { min: 24, max: 28, startPercent: 50, widthPercent: 25 },
+  { min: 28, max: 40, startPercent: 75, widthPercent: 25 },
+] as const;
+
+function getBmiMarkerPosition(bmi: number) {
+  const clampedBmi = Math.min(Math.max(bmi, 14), 40);
+  const segment =
+    bmiVisualSegments.find((candidate) => clampedBmi <= candidate.max) ??
+    bmiVisualSegments[bmiVisualSegments.length - 1];
+  const segmentProgress = (clampedBmi - segment.min) / (segment.max - segment.min);
+
+  return segment.startPercent + segmentProgress * segment.widthPercent;
 }
 
 function getBmiCategoryLabel(category: BmiPreview["category"]) {

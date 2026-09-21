@@ -135,7 +135,7 @@ describe("assessment persistence", () => {
   it("rejects a weight-gain target that is not above the current weight", async () => {
     const session = await sessionService.createSession();
 
-    await assessmentService.saveAnswer(session.sessionId, "goal", "improve_fitness");
+    await assessmentService.saveAnswer(session.sessionId, "goal", "gain_weight");
     await assessmentService.saveAnswer(session.sessionId, "currentWeightKg", 50);
 
     await expect(
