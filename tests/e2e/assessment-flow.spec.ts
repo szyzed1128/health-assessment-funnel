@@ -41,10 +41,18 @@ test("persists an assessment, restores it, and unlocks the member result", async
   await page.reload();
   await expect(page.getByRole("button", { name: "查看我的结果" })).toBeVisible();
   await page.getByRole("button", { name: "查看我的结果" }).click();
+  await expect(page).toHaveURL(/\/result\?sessionId=/);
   await expect(page.getByText("您的免费结果")).toBeVisible();
   await expect(page.getByText("解锁完整个性化健康报告，查看详细建议与预测数据。")).toBeVisible();
 
-  await page.getByRole("button", { name: "解锁完整报告" }).click();
+  await page.getByRole("button", { name: "前往模拟支付" }).click();
+  await expect(page).toHaveURL(/\/checkout\?sessionId=/);
+  await page.getByLabel("支付码").fill("WRONG-CODE");
+  await page.getByRole("button", { name: "确认模拟支付" }).click();
+  await expect(page.getByText("支付验证码无效。")).toBeVisible();
+  await page.getByLabel("支付码").fill("RQKJ-DEMO-2026");
+  await page.getByRole("button", { name: "确认模拟支付" }).click();
+  await expect(page).toHaveURL(/\/result\?sessionId=/);
   await expect(page.getByText("您的完整报告")).toBeVisible();
   await expect(page.getByText("每日建议摄入")).toBeVisible();
   await expect(page.getByText("预测日期来源")).toBeVisible();
@@ -81,8 +89,12 @@ test("skips the important date and uses the system forecast date", async ({ page
   await page.getByRole("button", { name: "每周 1-2 次" }).click();
   await page.getByRole("button", { name: "查看我的结果" }).click();
 
+  await expect(page).toHaveURL(/\/result\?sessionId=/);
   await expect(page.getByText("您的免费结果")).toBeVisible();
-  await page.getByRole("button", { name: "解锁完整报告" }).click();
+  await page.getByRole("button", { name: "前往模拟支付" }).click();
+  await page.getByLabel("支付码").fill("RQKJ-DEMO-2026");
+  await page.getByRole("button", { name: "确认模拟支付" }).click();
+  await expect(page).toHaveURL(/\/result\?sessionId=/);
   await expect(page.getByText("重要日期")).toBeVisible();
   await expect(page.getByText("未填写")).toBeVisible();
   await expect(page.getByText("系统预计日期", { exact: true }).last()).toBeVisible();

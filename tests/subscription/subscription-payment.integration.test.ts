@@ -4,6 +4,7 @@ import { POST as payRoute } from "@/app/api/pay/route";
 import { GET as resultRoute } from "@/app/api/sessions/[sessionId]/result/route";
 import { paymentService, subscriptionService } from "@/infrastructure/application-services";
 import { prisma } from "@/infrastructure/db/prisma";
+import { mockPaymentCode } from "@/modules/payment/mock-payment-code";
 
 async function createAssessedSession(bmi = 26.57) {
   const session = await prisma.assessmentSession.create({ data: { status: "ASSESSED" } });
@@ -82,8 +83,8 @@ describe("subscription authorization and mock payment", () => {
     const session = await createAssessedSession();
     const eventId = "f77d1baa-5b45-4ccc-8ca2-2f58a046eb4f";
 
-    const firstResult = await paymentService.pay(session.id, eventId);
-    const secondResult = await paymentService.pay(session.id, eventId);
+    const firstResult = await paymentService.pay(session.id, eventId, mockPaymentCode);
+    const secondResult = await paymentService.pay(session.id, eventId, mockPaymentCode);
 
     expect(firstResult).toMatchObject({ access: "MEMBER", recommendedDailyCalories: 1534 });
     expect(secondResult).toMatchObject({
@@ -108,26 +109,44 @@ describe("subscription authorization and mock payment", () => {
   it("rejects payment before a server-side assessment and rejects event reuse across sessions", async () => {
     const incomplete = await prisma.assessmentSession.create({ data: {} });
     const eventId = "02f997b8-e01a-4cd6-863e-31b5f3cf69f6";
-    await expect(paymentService.pay(incomplete.id, eventId)).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+    await expect(paymentService.pay(incomplete.id, eventId, mockPaymentCode)).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
 
     const firstSession = await createAssessedSession();
     const secondSession = await createAssessedSession();
-    await paymentService.pay(firstSession.id, eventId);
-    await expect(paymentService.pay(secondSession.id, eventId)).rejects.toMatchObject({ code: "CONFLICT" });
+    await paymentService.pay(firstSession.id, eventId, mockPaymentCode);
+    await expect(paymentService.pay(secondSession.id, eventId, mockPaymentCode)).rejects.toMatchObject({ code: "CONFLICT" });
   });
 
-  it("validates the payment API body and returns the authorized result", async () => {
+  it("validates the payment API body and only activates access with the correct payment code", async () => {
     const session = await createAssessedSession();
     const invalidResponse = await payRoute(new Request("http://localhost/api/pay", {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}),
     }));
-    const response = await payRoute(new Request("http://localhost/api/pay", {
+    const rejectedResponse = await payRoute(new Request("http://localhost/api/pay", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sessionId: session.id, paymentEventId: "4277c3c5-4d6a-45af-aea0-1eb04f94b3ce" }),
+      body: JSON.stringify({
+        sessionId: session.id,
+        paymentEventId: "36f863a2-5472-455f-94e6-bd5068799a88",
+        paymentCode: "WRONG-CODE",
+      }),
     }));
 
     expect(invalidResponse.status).toBe(422);
+    expect(rejectedResponse.status).toBe(422);
+    expect(await prisma.paymentEvent.count({ where: { sessionId: session.id } })).toBe(0);
+    expect((await subscriptionService.getVisibleResult(session.id)).access).toBe("FREE");
+
+    const response = await payRoute(new Request("http://localhost/api/pay", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        sessionId: session.id,
+        paymentEventId: "4277c3c5-4d6a-45af-aea0-1eb04f94b3ce",
+        paymentCode: mockPaymentCode,
+      }),
+    }));
+
     expect(response.status).toBe(200);
     expect((await response.json()).data.access).toBe("MEMBER");
     expect((await subscriptionService.getVisibleResult(session.id)).access).toBe("MEMBER");

@@ -1,4 +1,5 @@
 const baseUrl = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const mockPaymentCode = "RQKJ-DEMO-2026";
 
 const answers = {
   gender: "female",
@@ -38,7 +39,11 @@ for (const [questionKey, value] of Object.entries(answers)) {
 await request(`/api/sessions/${session.sessionId}/assessment`, { method: "POST" });
 await request("/api/pay", {
   method: "POST",
-  body: JSON.stringify({ sessionId: session.sessionId, paymentEventId: crypto.randomUUID() }),
+  body: JSON.stringify({
+    sessionId: session.sessionId,
+    paymentEventId: crypto.randomUUID(),
+    paymentCode: mockPaymentCode,
+  }),
 });
 
 console.log(`Paid demo sessionId: ${session.sessionId}`);

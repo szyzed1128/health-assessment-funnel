@@ -28,6 +28,12 @@ h1 { margin: 20px 0 32px; font-size: 32px; line-height: 1.15; }
 .date-part span { flex: 0 0 auto; color: #507866; font-weight: 700; }
 .muted { color: #617069; line-height: 1.5; }
 .error-message { color: #b42318; line-height: 1.5; }
+.session-meta { margin: -18px 0 24px; color: #617069; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.session-meta code, .code-hint code { padding: 2px 5px; border-radius: 4px; background: #edf3ef; color: #17221f; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; }
+.code-hint { margin: 18px 0; padding: 12px 14px; border: 1px solid #c9d8ce; border-radius: 6px; background: #f7fbf8; color: #365b48; line-height: 1.5; }
+.checkout-form { display: grid; gap: 16px; margin-top: 20px; }
+.checkout-form label { display: grid; gap: 8px; color: #507866; font-size: 14px; font-weight: 700; }
+.checkout-form input { width: 100%; min-height: 54px; border: 1px solid #c9d8ce; border-radius: 6px; padding: 12px; color: #17221f; }
 .preview-message { margin: -12px 0 16px; color: #617069; font-size: 14px; line-height: 1.5; }
 .bmi-preview { margin: -12px 0 20px; padding: 14px 16px; border: 1px solid #c9d8ce; border-left: 4px solid #20704b; border-radius: 6px; background: #f7fbf8; color: #365b48; font-size: 14px; line-height: 1.5; }
 .bmi-preview p { margin: 8px 0 0; }

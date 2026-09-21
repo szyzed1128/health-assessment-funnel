@@ -9,6 +9,12 @@ describe("getClientErrorMessage", () => {
     );
   });
 
+  it("keeps a specific Chinese domain message from the API", () => {
+    expect(getClientErrorMessage({ error: { code: "VALIDATION_ERROR", message: "支付验证码无效。" } }, "模拟支付失败。")).toBe(
+      "支付验证码无效。",
+    );
+  });
+
   it("uses the caller fallback for an unknown payload", () => {
     expect(getClientErrorMessage({ error: { code: "UNKNOWN" } }, "无法保存答案。")).toBe("无法保存答案。");
   });

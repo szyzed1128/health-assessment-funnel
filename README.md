@@ -46,6 +46,8 @@ npm run dev
 
 打开 `http://localhost:3000`。浏览器会保存匿名 Session ID；刷新或重新打开页面会从后端恢复该会话的答案和进度。普通用户重新测评会生成新的随机 Session，不影响已有用户记录；若通过 API 更改已评估会话的答案，旧结果会在同一事务内作废，必须重新计算。
 
+完成测评后会进入 `http://localhost:3000/result?sessionId=...`。该页面只读取后端结果接口：数据库订阅状态为非会员时显示免费脱敏结果，支付成功后同一个 `sessionId` 才会显示会员完整报告。免费结果页的解锁入口会进入 `http://localhost:3000/checkout?sessionId=...`，本地演示支付码为 `RQKJ-DEMO-2026`。
+
 本项目不允许降级策略：不得用 SQLite、内存或仅前端存储替代 PostgreSQL/Prisma；不得把评估、订阅判断、字段过滤或支付成功判断移到前端；不得以 mock 数据或手工点击替代核心自动化测试。
 
 ## BMI 与目标分流
@@ -68,7 +70,7 @@ npm run dev
 | `GET /api/sessions/:sessionId/bmi-preview` | 在身高和当前体重已保存后，返回服务端 BMI 预览及目标体重建议；这不是最终评估结果。 |
 | `POST /api/sessions/:sessionId/assessment` | 根据已持久化答案在服务端计算 BMI、建议摄入量、系统目标预测日期、重要日期来源和预测点，并持久化结果。 |
 | `GET /api/sessions/:sessionId/result` | 按 `subscription_status` 返回免费脱敏结果或会员完整结果。 |
-| `POST /api/pay` | 模拟支付回调，原子地记录支付事件并启用 30 天会员状态。 |
+| `POST /api/pay` | 校验模拟支付码后，原子地记录支付事件并启用 30 天会员状态。 |
 
 免费结果只包含 BMI、摘要、目标体重差与升级提示。会员结果才返回建议摄入量、重要日期、日期来源、实际预测参考日期、系统预计日期和每周预测点；前端也不会为免费用户渲染预测趋势。
 
@@ -79,10 +81,10 @@ npm run dev
 ```bash
 curl -X POST http://localhost:3000/api/pay \
   -H "content-type: application/json" \
-  -d '{"sessionId":"替换为已评估的 sessionId","paymentEventId":"替换为新的 UUID"}'
+  -d '{"sessionId":"替换为已评估的 sessionId","paymentEventId":"替换为新的 UUID","paymentCode":"RQKJ-DEMO-2026"}'
 ```
 
-重复使用同一个 `paymentEventId` 且 Session 相同是幂等的；复用于其他 Session 会返回 `409 CONFLICT`。
+支付码错误时不会创建支付事件，也不会激活会员。重复使用同一个 `paymentEventId` 且 Session 相同是幂等的；复用于其他 Session 会返回 `409 CONFLICT`。
 
 生成一个独立的已支付验收 Session：
 
@@ -103,8 +105,8 @@ npm test
 
 该命令会先准备隔离的 `health_assessment_test` 数据库，再依次运行：
 
-- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付幂等与冲突。目前 10 个文件、71 项测试通过。
-- Playwright：浏览器端完成测评、刷新恢复、免费结果、支付解锁会员结果、预测趋势展示、保持体重自动跳过、日期校验与重新开始。目前 4 项测试通过。
+- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付码校验、支付幂等与冲突。目前 10 个文件、75 项测试通过。
+- Playwright：浏览器端完成测评、刷新恢复、独立免费结果页、模拟支付页、支付解锁会员结果、预测趋势展示、保持体重自动跳过、日期校验与重新开始。目前 4 项测试通过。
 
 尚未覆盖真实第三方支付网关或真实生产网络故障，因为 PRD 明确要求的是模拟 `/pay` 回调；支付事件的幂等、冲突和事务路径已覆盖。
 

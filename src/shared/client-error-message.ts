@@ -15,6 +15,14 @@ export function getClientErrorMessage(payload: unknown, fallback: string) {
     "code" in payload.error &&
     typeof payload.error.code === "string"
   ) {
+    if (
+      "message" in payload.error &&
+      typeof payload.error.message === "string" &&
+      /[\u4e00-\u9fff]/.test(payload.error.message)
+    ) {
+      return payload.error.message;
+    }
+
     return messageByCode[payload.error.code] ?? fallback;
   }
 
