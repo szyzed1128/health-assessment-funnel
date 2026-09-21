@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: health_user
+          POSTGRES_PASSWORD: health_password
+          POSTGRES_DB: health_assessment
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U health_user -d health_assessment"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: >-
+          node -e "const { Client } = require('pg'); const client = new Client({ connectionString: 'postgresql://health_user:health_password@localhost:5432/health_assessment' }); client.connect().then(() => client.query('CREATE DATABASE health_assessment_test')).catch((error) => { if (error.code !== '42P04') throw error; }).finally(() => client.end());"
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+        env:
+          DATABASE_URL: postgresql://health_user:health_password@localhost:5432/health_assessment_test?schema=public

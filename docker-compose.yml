@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: health-assessment-postgres
+    environment:
+      POSTGRES_DB: health_assessment
+      POSTGRES_USER: health_user
+      POSTGRES_PASSWORD: health_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - health_assessment_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-test-db.sql:/docker-entrypoint-initdb.d/01-create-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U health_user -d health_assessment"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  health_assessment_postgres_data:

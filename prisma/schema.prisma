@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AssessmentSessionStatus {
+  IN_PROGRESS
+  READY_FOR_ASSESSMENT
+  ASSESSED
+}
+
+enum AssessmentAnswerType {
+  SINGLE_SELECT
+  MULTI_SELECT
+  NUMBER
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  ACTIVE
+  EXPIRED
+}
+
+enum PaymentStatus {
+  SUCCEEDED
+  FAILED
+}
+
+model AssessmentSession {
+  id        String                  @id @default(uuid()) @db.Uuid
+  status    AssessmentSessionStatus @default(IN_PROGRESS)
+  currentStep Int                   @default(0)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  answers      AssessmentAnswer[]
+  healthResult HealthAssessmentResult?
+  subscription Subscription?
+  paymentEvents PaymentEvent[]
+
+  @@index([status, updatedAt])
+}
+
+model AssessmentAnswer {
+  id          String               @id @default(uuid()) @db.Uuid
+  sessionId   String               @db.Uuid
+  questionKey String               @db.VarChar(64)
+  answerType  AssessmentAnswerType
+  value       Json
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionKey])
+  @@index([sessionId, updatedAt])
+}
+
+model HealthAssessmentResult {
+  id                       String   @id @default(uuid()) @db.Uuid
+  sessionId                String   @unique @db.Uuid
+  bmi                      Decimal? @db.Decimal(5, 2)
+  recommendedDailyCalories Int?
+  targetDate               DateTime?
+  weeklyForecast           Json?
+  actionPlan               Json?
+  algorithmVersion         String   @db.VarChar(32)
+  computedAt               DateTime @default(now())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id        String             @id @default(uuid()) @db.Uuid
+  sessionId String             @unique @db.Uuid
+  status    SubscriptionStatus @default(INACTIVE)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([status, endsAt])
+}
+
+model PaymentEvent {
+  id             String        @id @default(uuid()) @db.Uuid
+  sessionId      String        @db.Uuid
+  paymentEventId String        @unique @db.VarChar(128)
+  status         PaymentStatus
+  processedAt    DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+
+  session AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
