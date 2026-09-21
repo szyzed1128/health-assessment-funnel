@@ -1,6 +1,10 @@
 import { AssessmentAnswerType, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/prisma";
-import type { AnswerWrite, AssessmentRepository, SaveAnswerOutcome } from "@/modules/assessment/assessment-repository";
+import type {
+  AnswerWrite,
+  AssessmentRepository,
+  SaveAnswerOutcome,
+} from "@/modules/assessment/assessment-repository";
 import type { SessionWithAnswers } from "@/modules/session/session-repository";
 
 const maxTransactionAttempts = 5;
@@ -11,6 +15,13 @@ export class PrismaAssessmentRepository implements AssessmentRepository {
     deriveState: (answers: SessionWithAnswers["answers"]) => {
       currentStep: number;
       status: SessionWithAnswers["session"]["status"];
+    },
+    deriveAdditionalAnswers?: (
+      answers: SessionWithAnswers["answers"],
+      changedQuestionKey: string,
+    ) => {
+      upserts: Array<Pick<AnswerWrite, "questionKey" | "answerType" | "value">>;
+      deleteQuestionKeys: string[];
     },
   ): Promise<SaveAnswerOutcome> {
     for (let attempt = 1; attempt <= maxTransactionAttempts; attempt += 1) {
@@ -46,9 +57,54 @@ export class PrismaAssessmentRepository implements AssessmentRepository {
               },
             });
 
-            const answers = await transaction.assessmentAnswer.findMany({
+            let answers = await transaction.assessmentAnswer.findMany({
               where: { sessionId: answer.sessionId },
             });
+
+            const derivedAnswerSync = deriveAdditionalAnswers?.(
+              answers.map((persistedAnswer) => ({
+                questionKey: persistedAnswer.questionKey,
+                value: persistedAnswer.value,
+              })),
+              answer.questionKey,
+            ) ?? { upserts: [], deleteQuestionKeys: [] };
+            if (derivedAnswerSync.deleteQuestionKeys.length > 0) {
+              await transaction.assessmentAnswer.deleteMany({
+                where: {
+                  sessionId: answer.sessionId,
+                  questionKey: { in: derivedAnswerSync.deleteQuestionKeys },
+                },
+              });
+            }
+            for (const additionalAnswer of derivedAnswerSync.upserts) {
+              await transaction.assessmentAnswer.upsert({
+                where: {
+                  sessionId_questionKey: {
+                    sessionId: answer.sessionId,
+                    questionKey: additionalAnswer.questionKey,
+                  },
+                },
+                create: {
+                  sessionId: answer.sessionId,
+                  questionKey: additionalAnswer.questionKey,
+                  answerType: additionalAnswer.answerType as AssessmentAnswerType,
+                  value: additionalAnswer.value as Prisma.InputJsonValue,
+                },
+                update: {
+                  answerType: additionalAnswer.answerType as AssessmentAnswerType,
+                  value: additionalAnswer.value as Prisma.InputJsonValue,
+                },
+              });
+            }
+            if (
+              derivedAnswerSync.deleteQuestionKeys.length > 0 ||
+              derivedAnswerSync.upserts.length > 0
+            ) {
+              answers = await transaction.assessmentAnswer.findMany({
+                where: { sessionId: answer.sessionId },
+              });
+            }
+
             const nextState = deriveState(answers);
             if (session.status === "ASSESSED") {
               await transaction.healthAssessmentResult.deleteMany({ where: { sessionId: answer.sessionId } });

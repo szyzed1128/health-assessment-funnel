@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { POST as assessSessionRoute } from "@/app/api/sessions/[sessionId]/assessment/route";
+import { GET as bmiPreviewRoute } from "@/app/api/sessions/[sessionId]/bmi-preview/route";
 import { assessmentService, healthService, sessionService } from "@/infrastructure/application-services";
 import { prisma } from "@/infrastructure/db/prisma";
 import { ValidationError } from "@/shared/errors/domain-error";
@@ -12,6 +13,9 @@ const validAnswers = {
   heightCm: 168,
   currentWeightKg: 75,
   targetWeightKg: 65,
+  bigDayType: "wedding",
+  bigDayDate: futureDateInput(140),
+  targetDateSource: "important_date",
   exerciseFrequency: "one_to_two_times_weekly",
 } as const;
 
@@ -38,11 +42,14 @@ describe("server-side health assessment", () => {
     const stored = await prisma.healthAssessmentResult.findUnique({ where: { sessionId: session.sessionId } });
     const storedSession = await prisma.assessmentSession.findUnique({ where: { id: session.sessionId } });
 
-    expect(result).toMatchObject({ bmi: 26.57, recommendedDailyCalories: 1534 });
+    expect(result).toMatchObject({ bmi: 26.57, recommendedDailyCalories: 1484 });
     expect(stored).toMatchObject({
-      recommendedDailyCalories: 1534,
-      algorithmVersion: "v1-mifflin-simple",
+      recommendedDailyCalories: 1484,
+      algorithmVersion: "v2-goal-routing",
     });
+    expect(stored?.requestedTargetDate?.toISOString().slice(0, 10)).toBe(validAnswers.bigDayDate);
+    expect(stored?.targetDateSource).toBe("IMPORTANT_DATE");
+    expect(stored?.forecastTargetDate?.toISOString().slice(0, 10)).toBe(validAnswers.bigDayDate);
     expect(storedSession?.status).toBe("ASSESSED");
   });
 
@@ -54,6 +61,31 @@ describe("server-side health assessment", () => {
     expect(await prisma.healthAssessmentResult.count({ where: { sessionId: session.sessionId } })).toBe(0);
   });
 
+  it("returns a server-side BMI preview after height and current weight are saved", async () => {
+    const session = await sessionService.createSession();
+    await assessmentService.saveAnswer(session.sessionId, "goal", "maintain_weight");
+    await assessmentService.saveAnswer(session.sessionId, "heightCm", 168);
+    await assessmentService.saveAnswer(session.sessionId, "currentWeightKg", 65);
+
+    const response = await bmiPreviewRoute(
+      new Request(`http://localhost/api/sessions/${session.sessionId}/bmi-preview`),
+      { params: Promise.resolve({ sessionId: session.sessionId }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      data: {
+        bmi: 23.03,
+        category: "NORMAL",
+        effectiveGoal: "maintain_weight",
+        goalResolution: "AUTO_MAINTAIN",
+        requiresConfirmation: false,
+        autoFillTargetWeightKg: 65,
+        recommendedTargetWeightRange: null,
+      },
+    });
+  });
+
   it("keeps one result record associated with its session when recalculated", async () => {
     const session = await sessionService.createSession();
     for (const [questionKey, value] of Object.entries(validAnswers)) {
@@ -62,6 +94,7 @@ describe("server-side health assessment", () => {
 
     await healthService.assessSession(session.sessionId);
     await assessmentService.saveAnswer(session.sessionId, "currentWeightKg", 74);
+    await assessmentService.saveAnswer(session.sessionId, "targetWeightKg", 65);
     const recalculated = await healthService.assessSession(session.sessionId);
     const storedSession = await prisma.assessmentSession.findUnique({
       where: { id: session.sessionId },
@@ -87,7 +120,13 @@ describe("server-side health assessment", () => {
     expect(response.status).toBe(201);
     expect((await response.json()).data).toEqual({ status: "ASSESSED" });
     expect(await prisma.healthAssessmentResult.findUnique({ where: { sessionId: session.sessionId } })).toMatchObject({
-      recommendedDailyCalories: 1534,
+      recommendedDailyCalories: 1484,
     });
   });
 });
+
+function futureDateInput(daysFromNow: number) {
+  const now = new Date();
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysFromNow));
+  return date.toISOString().slice(0, 10);
+}

@@ -48,6 +48,14 @@ npm run dev
 
 本项目不允许降级策略：不得用 SQLite、内存或仅前端存储替代 PostgreSQL/Prisma；不得把评估、订阅判断、字段过滤或支付成功判断移到前端；不得以 mock 数据或手工点击替代核心自动化测试。
 
+## BMI 与目标分流
+
+目标相关答案分为三类：`goal` 是用户原始选择，`effectiveGoal` 是服务端根据 BMI 后实际执行的目标，`goalResolution` 是本次是否直接采用、自动保持、重定向或阻止的原因。BMI 使用中国成人标准：低于 18.5 为偏低，18.5 至 24 为正常，24 至 28 为偏高，28 及以上为较高。
+
+选择“保持体重”后，服务端会在保存当前体重的同一事务内生成分流状态：BMI 正常时自动把目标体重保存为当前体重，并跳过目标体重题；BMI 偏低时先展示中间提示页，确认后进入增重目标体重；BMI 偏高或较高时先展示中间提示页，确认后进入减重目标体重。中间提示页本身也是持久化进度的一部分，刷新后会回到该提示页。
+
+直接选择“减重”但 BMI 偏低时，不允许继续减重，页面会提示改为增重或保持体重；即使绕过前端直接调用 API，服务端也会拒绝低 BMI 减重目标。直接选择“增重”会进入增重流程，服务端会校验目标体重必须高于当前体重；当存在健康建议区间时，目标还必须落在该区间内。
+
 ## API
 
 所有响应统一为 `{ "data": ... }` 或 `{ "error": { "code", "message" } }`。
@@ -55,13 +63,14 @@ npm run dev
 | 方法与路径 | 用途 |
 | --- | --- |
 | `POST /api/sessions` | 创建匿名测评 Session。 |
-| `PUT /api/sessions/:sessionId/answers/:questionKey` | 增量保存或覆盖未评估 Session 的单题答案。 |
+| `PUT /api/sessions/:sessionId/answers/:questionKey` | 增量保存或覆盖单题答案；若已评估会话变更答案，会作废旧结果并恢复为待评估。 |
 | `GET /api/sessions/:sessionId/progress` | 恢复答案、当前步骤和会话状态。 |
-| `POST /api/sessions/:sessionId/assessment` | 根据已持久化答案在服务端计算 BMI、建议摄入量、目标日期和预测点，并持久化结果。 |
+| `GET /api/sessions/:sessionId/bmi-preview` | 在身高和当前体重已保存后，返回服务端 BMI 预览及目标体重建议；这不是最终评估结果。 |
+| `POST /api/sessions/:sessionId/assessment` | 根据已持久化答案在服务端计算 BMI、建议摄入量、系统目标预测日期、重要日期来源和预测点，并持久化结果。 |
 | `GET /api/sessions/:sessionId/result` | 按 `subscription_status` 返回免费脱敏结果或会员完整结果。 |
 | `POST /api/pay` | 模拟支付回调，原子地记录支付事件并启用 30 天会员状态。 |
 
-免费结果只包含 BMI、摘要、目标体重差与升级提示。会员结果才返回建议摄入量、目标日期和每周预测点；前端也不会为免费用户渲染预测趋势。
+免费结果只包含 BMI、摘要、目标体重差与升级提示。会员结果才返回建议摄入量、重要日期、日期来源、实际预测参考日期、系统预计日期和每周预测点；前端也不会为免费用户渲染预测趋势。
 
 ## 模拟支付回放
 
@@ -94,8 +103,8 @@ npm test
 
 该命令会先准备隔离的 `health_assessment_test` 数据库，再依次运行：
 
-- Vitest：算法边界、非法输入、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付幂等与冲突。
-- Playwright：浏览器端完成测评、刷新恢复、免费结果、支付解锁会员结果、预测趋势展示与重新开始。
+- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付幂等与冲突。目前 10 个文件、71 项测试通过。
+- Playwright：浏览器端完成测评、刷新恢复、免费结果、支付解锁会员结果、预测趋势展示、保持体重自动跳过、日期校验与重新开始。目前 4 项测试通过。
 
 尚未覆盖真实第三方支付网关或真实生产网络故障，因为 PRD 明确要求的是模拟 `/pay` 回调；支付事件的幂等、冲突和事务路径已覆盖。
 
@@ -129,6 +138,9 @@ erDiagram
     decimal bmi
     int recommendedDailyCalories
     datetime targetDate
+    datetime requestedTargetDate
+    enum targetDateSource
+    datetime forecastTargetDate
     json weeklyForecast
     string algorithmVersion
   }
@@ -147,7 +159,7 @@ erDiagram
   }
 ```
 
-`AssessmentAnswer` 采用 `questionKey + answerType + JSON value`，使题目和答案类型可扩展；每个 Session 只关联一条最新评估结果和一条订阅记录，支付事件则保留可追溯的幂等键。
+`AssessmentAnswer` 采用 `questionKey + answerType + JSON value`，使题目和答案类型可扩展。当前流程会保存用户原始 `goal`，并由服务端派生 `effectiveGoal`、`goalResolution` 与必要时的 `goalResolutionConfirmed`；这些派生答案用于恢复中间提示页、防止前端绕过目标分流。重要日期拆为 `bigDayType`、`bigDayDate` 和 `targetDateSource`：用户可以选择系统预计日期，或使用重要日期作为预测参考。`HealthAssessmentResult.targetDate` 保留服务端系统预计日期，`requestedTargetDate` 保存用户填写的重要日期，`targetDateSource` 保存最终参考来源，`forecastTargetDate` 保存实际用于建议摄入量和曲线的日期；每个 Session 只关联一条最新评估结果和一条订阅记录，支付事件则保留可追溯的幂等键。
 
 ## AI 使用复盘
 

@@ -4,6 +4,7 @@ export type PersistedSession = {
   id: string;
   status: SessionStatus;
   currentStep: number;
+  createdAt: Date;
   updatedAt: Date;
 };
 

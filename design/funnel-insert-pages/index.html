@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>测评漏斗插入页设计稿</title>
+    <style>
+      :root {
+        color: #1d2320;
+        background: #f2eee7;
+        font-family: Arial, "Microsoft YaHei", sans-serif;
+        --ink: #1d2320;
+        --muted: #66736d;
+        --line: #ded7cc;
+        --paper: #fffaf2;
+        --soft: #f6efe4;
+        --green: #27624b;
+        --green-2: #dceadf;
+        --coral: #c95f49;
+        --gold: #d7a63d;
+        --blue: #315a78;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      button, input { font: inherit; }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(330px, 390px));
+        gap: 28px;
+        align-items: start;
+        justify-content: center;
+        padding: 32px;
+      }
+
+      .phone {
+        width: 390px;
+        min-height: 844px;
+        overflow: hidden;
+        border: 1px solid #d4cabc;
+        border-radius: 8px;
+        background: var(--paper);
+        box-shadow: 0 18px 44px rgba(55, 45, 32, 0.14);
+      }
+
+      .screen {
+        min-height: 844px;
+        display: flex;
+        flex-direction: column;
+        padding: 18px 20px 22px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 32px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .back, .menu {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .dots {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+        width: 118px;
+      }
+
+      .dots span {
+        height: 4px;
+        border-radius: 4px;
+        background: #d8d1c5;
+      }
+
+      .dots .on { background: var(--green); }
+
+      .eyebrow {
+        margin: 26px 0 10px;
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0 0 14px;
+        color: var(--ink);
+        font-size: 29px;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 22px;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .hero-photo {
+        min-height: 218px;
+        margin: 22px 0 18px;
+        border-radius: 8px;
+        background:
+          linear-gradient(145deg, rgba(255,250,242,0.1), rgba(39,98,75,0.08)),
+          url("https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80");
+        background-position: center;
+        background-size: cover;
+      }
+
+      .stat-grid {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0 0;
+      }
+
+      .stat {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .stat strong { color: var(--ink); font-size: 18px; }
+      .stat small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+      .badge {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: var(--green-2);
+        color: var(--green);
+        font-weight: 900;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 18px 0;
+      }
+
+      .chip {
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .coach-row {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .coach {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 8px;
+        background-position: center;
+        background-size: cover;
+      }
+
+      .a1 { background-image: url("https://images.unsplash.com/photo-1571019613914-85f342c6a11e?auto=format&fit=crop&w=300&q=80"); }
+      .a2 { background-image: url("https://images.unsplash.com/photo-1603988363607-e1e4a66962c6?auto=format&fit=crop&w=300&q=80"); }
+      .a3 { background-image: url("https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=300&q=80"); }
+
+      .coach strong, .review strong { display: block; color: var(--ink); font-size: 15px; }
+      .coach span, .review span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+      .promise {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .promise div {
+        min-height: 120px;
+        padding: 14px;
+        border-radius: 8px;
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+
+      .promise b {
+        display: block;
+        color: var(--ink);
+        font-size: 24px;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+
+      .progress-block {
+        display: grid;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .progress-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .bar {
+        grid-column: 1 / -1;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #e7dfd3;
+      }
+
+      .bar span { display: block; height: 100%; border-radius: 8px; background: var(--green); }
+
+      .bmi-card {
+        margin-top: 18px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .bmi-value {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .bmi-value strong { color: var(--ink); font-size: 42px; line-height: 0.95; }
+      .bmi-value span { color: var(--coral); font-size: 14px; font-weight: 800; }
+
+      .scale {
+        position: relative;
+        display: grid;
+        grid-template-columns: 18% 28% 22% 32%;
+        height: 12px;
+        margin: 14px 0 8px;
+        border-radius: 8px;
+        overflow: visible;
+      }
+
+      .scale i:nth-child(1) { background: #e3bd45; border-radius: 8px 0 0 8px; }
+      .scale i:nth-child(2) { background: #2f7d57; }
+      .scale i:nth-child(3) { background: #df8b3c; }
+      .scale i:nth-child(4) { background: #c85245; border-radius: 0 8px 8px 0; }
+
+      .marker {
+        position: absolute;
+        top: 50%;
+        left: 72%;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        background: var(--ink);
+        transform: translate(-50%, -50%);
+      }
+
+      .event-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .option {
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .option span:last-child {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fff;
+        font-size: 14px;
+      }
+
+      .chart-card {
+        margin-top: 18px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .chart {
+        width: 100%;
+        height: 180px;
+      }
+
+      .chart path { fill: none; stroke: var(--green); stroke-width: 5; stroke-linecap: round; }
+      .chart .grid { stroke: #e7dfd3; stroke-width: 1; }
+      .chart circle { fill: var(--coral); }
+
+      .review-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .review {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .email-box {
+        margin-top: 22px;
+        display: grid;
+        gap: 10px;
+      }
+
+      input {
+        width: 100%;
+        min-height: 54px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0 14px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .offer {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .plan {
+        padding: 14px;
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .plan.selected {
+        border-color: var(--green);
+        box-shadow: inset 0 0 0 1px var(--green);
+      }
+
+      .plan-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .price { color: var(--ink); font-size: 25px; font-weight: 900; }
+      .save { color: var(--coral); font-size: 12px; font-weight: 900; }
+
+      .cta {
+        width: 100%;
+        min-height: 54px;
+        margin-top: auto;
+        border: 0;
+        border-radius: 8px;
+        background: var(--green);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 900;
+      }
+
+      .secondary {
+        margin-top: 10px;
+        color: var(--muted);
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .trust {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 16px 0;
+      }
+
+      .trust div {
+        min-height: 70px;
+        display: grid;
+        place-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--muted);
+        text-align: center;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .legal {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+        color: #7a7268;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .note {
+        margin-top: 10px;
+        color: #7a7268;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 430px) {
+        .board { display: block; padding: 0; }
+        .phone { width: 100%; min-height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+        .screen { min-height: 100vh; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <article class="phone" id="screen-social">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span></span><span></span><span></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">同龄用户正在行动</p>
+          <h1>已经有很多 30+ 用户开始了自己的健康计划</h1>
+          <p>你不是从零开始。我们会根据你的目标、身体状态和生活节奏生成更适合的建议。</p>
+          <div class="hero-photo" aria-label="居家训练照片"></div>
+          <div class="stat-grid">
+            <div class="stat"><span class="badge">15万+</span><div><strong>同年龄段用户</strong><small>完成过居家训练测评</small></div></div>
+            <div class="stat"><span class="badge">4.7</span><div><strong>用户平均评分</strong><small>来自计划完成后的反馈</small></div></div>
+          </div>
+          <button class="cta">继续</button>
+          <p class="legal">继续表示你同意服务条款和隐私政策。页面仅用于体验设计展示。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-goal-feedback">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span></span><span></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">目标已记录</p>
+          <h1>我们会围绕“减重”帮你安排下一步</h1>
+          <p>接下来只需要了解几个关键习惯，就能判断计划强度、饮食建议和目标周期。</p>
+          <div class="chips">
+            <span class="chip">低压力</span>
+            <span class="chip">适合居家</span>
+            <span class="chip">循序渐进</span>
+            <span class="chip">按身体状态调整</span>
+          </div>
+          <div class="promise">
+            <div><b>4 周</b><p>先建立可坚持的训练节奏。</p></div>
+            <div><b>3 类</b><p>结合运动、饮食和生活习惯。</p></div>
+          </div>
+          <button class="cta">继续测评</button>
+          <p class="legal">建议：读取 `goal` 后动态替换标题中的目标词。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-time-promise">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span></span><span></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">降低行动门槛</p>
+          <h1>每天 10-20 分钟，也可以开始看到变化</h1>
+          <p>计划不应该占满你的生活。我们会优先推荐短时、清晰、容易坚持的动作组合。</p>
+          <div class="promise">
+            <div><b>10</b><p>分钟起步训练</p></div>
+            <div><b>0</b><p>不需要复杂器械</p></div>
+            <div><b>3</b><p>每周关键训练日</p></div>
+            <div><b>1</b><p>专注一个主要目标</p></div>
+          </div>
+          <button class="cta">继续</button>
+          <p class="legal">插入在运动频率或目标部位前后，减少用户对后续问题数量的抵触。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-expert">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">专业背书</p>
+          <h1>你的计划会参考训练与营养两个维度</h1>
+          <p>我们建议在生活习惯和饮食题前放这个页面，告诉用户为什么还需要继续回答。</p>
+          <div class="coach-row">
+            <div class="coach"><span class="avatar a1"></span><div><strong>训练教练</strong><span>负责动作强度、目标部位和限制条件。</span></div></div>
+            <div class="coach"><span class="avatar a2"></span><div><strong>康复方向顾问</strong><span>关注膝盖、背部和体能基础。</span></div></div>
+            <div class="coach"><span class="avatar a3"></span><div><strong>营养顾问</strong><span>结合饮食类型和三餐节奏生成建议。</span></div></div>
+          </div>
+          <button class="cta">继续完善资料</button>
+          <p class="legal">不要宣称医学诊断。使用“建议、参考、非医疗建议”等边界文案。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-analysis">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">正在生成结果</p>
+          <h1>正在分析你的测评答案</h1>
+          <p>这一步用于承接服务端计算。前端只展示进度，BMI、热量和目标日期仍由服务端返回。</p>
+          <div class="progress-block">
+            <div class="progress-row"><span>个人资料</span><strong>100%</strong><div class="bar"><span style="width:100%"></span></div></div>
+            <div class="progress-row"><span>运动状态</span><strong>86%</strong><div class="bar"><span style="width:86%"></span></div></div>
+            <div class="progress-row"><span>生活习惯</span><strong>64%</strong><div class="bar"><span style="width:64%"></span></div></div>
+            <div class="progress-row"><span>营养偏好</span><strong>38%</strong><div class="bar"><span style="width:38%"></span></div></div>
+          </div>
+          <div class="trust">
+            <div>隐私保护</div>
+            <div>服务端计算</div>
+            <div>可随时恢复</div>
+          </div>
+          <p class="legal">建议作为 `loading` 类型 funnel step，不产生业务答案。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-bmi">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">免费结果预览</p>
+          <h1>这是你的初步健康画像</h1>
+          <p>先给用户一部分真实价值，再引导查看完整计划。</p>
+          <div class="bmi-card">
+            <div class="bmi-value"><strong>27.8</strong><span>偏高</span></div>
+            <div class="scale"><i></i><i></i><i></i><i></i><span class="marker"></span></div>
+            <p>你的 BMI 位于偏高区间。结合目标体重和运动频率，建议采用温和、持续的训练节奏。</p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat"><span class="badge">体型</span><div><strong>容易囤积型</strong><small>适合低冲击训练和稳定热量管理</small></div></div>
+            <div class="stat"><span class="badge">节奏</span><div><strong>循序渐进</strong><small>先建立每周训练习惯</small></div></div>
+          </div>
+          <button class="cta">查看目标预测</button>
+          <p class="legal">此页读取服务端结果，不在前端重新计算。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-event">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">目标动机</p>
+          <h1>接下来有什么重要日子吗？</h1>
+          <p>把目标和具体场景绑定，用户更容易觉得计划和自己有关。</p>
+          <div class="event-list">
+            <button class="option"><span>旅行或假期</span><span>›</span></button>
+            <button class="option"><span>婚礼或聚会</span><span>›</span></button>
+            <button class="option"><span>生日</span><span>›</span></button>
+            <button class="option"><span>暂时没有</span><span>›</span></button>
+          </div>
+          <button class="cta">下一步</button>
+          <p class="legal">建议作为可选答案保存：`importantEvent`、`importantEventDate`。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-forecast">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">目标预测</p>
+          <h1>我们预计你可以在 12 周内接近目标</h1>
+          <p>预测图用来制造“计划已经为我生成”的感觉，但必须附带边界说明。</p>
+          <div class="chart-card">
+            <svg class="chart" viewBox="0 0 320 180" role="img" aria-label="体重预测曲线">
+              <line class="grid" x1="20" x2="300" y1="142" y2="142"></line>
+              <line class="grid" x1="20" x2="300" y1="98" y2="98"></line>
+              <line class="grid" x1="20" x2="300" y1="54" y2="54"></line>
+              <path d="M24 42 C82 62 104 78 146 94 C190 110 224 122 296 138"></path>
+              <circle cx="24" cy="42" r="5"></circle>
+              <circle cx="296" cy="138" r="5"></circle>
+            </svg>
+            <div class="plan-row"><span>当前 75kg</span><strong>目标 65kg</strong></div>
+          </div>
+          <p class="note">预测基于你提交的数据和演示算法，实际结果会受执行情况、饮食、睡眠和身体状态影响。</p>
+          <button class="cta">生成我的计划</button>
+          <p class="legal">预测曲线应来自服务端 `weeklyForecast`。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-plan-loading">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">计划即将完成</p>
+          <h1>正在创建你的 4 周居家训练计划</h1>
+          <div class="progress-block">
+            <div class="progress-row"><span>计划生成</span><strong>72%</strong><div class="bar"><span style="width:72%"></span></div></div>
+          </div>
+          <p>等待期间展示评价和社会证明，比空白 loading 更容易保留用户。</p>
+          <div class="review-list">
+            <div class="review"><strong>“一周后明显更有精神”</strong><span>动作短，容易坚持。</span></div>
+            <div class="review"><strong>“终于不是一堆复杂表格”</strong><span>每天照着做就可以。</span></div>
+            <div class="review"><strong>“对膝盖更友好”</strong><span>低冲击训练让我更安心。</span></div>
+          </div>
+          <p class="legal">建议不超过 8-12 秒，超过则给可点击继续按钮。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-email">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">保存你的计划</p>
+          <h1>输入邮箱，获取你的居家训练计划</h1>
+          <p>这里不是简单收集联系方式，要明确说明用途和隐私边界。</p>
+          <div class="email-box">
+            <input type="email" placeholder="你的邮箱" />
+            <div class="stat"><span class="badge">锁</span><div><strong>隐私保护</strong><small>仅用于保存计划、恢复进度和发送结果。</small></div></div>
+          </div>
+          <button class="cta">继续</button>
+          <p class="legal">建议落到 `LeadProfile`，不要混入健康答案表。</p>
+        </section>
+      </article>
+
+      <article class="phone" id="screen-offer">
+        <section class="screen">
+          <div class="topbar"><button class="back">‹</button><div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><button class="menu">≡</button></div>
+          <p class="eyebrow">专属方案已准备好</p>
+          <h1>选择你的完整报告与 4 周计划</h1>
+          <p>报价页只展示订阅意图，不在前端决定会员权限。</p>
+          <div class="offer">
+            <div class="plan selected">
+              <div class="plan-row"><strong>4 周计划</strong><span class="save">推荐</span></div>
+              <div class="plan-row"><span>训练 + 饮食建议 + 预测趋势</span><span class="price">¥29</span></div>
+            </div>
+            <div class="plan">
+              <div class="plan-row"><strong>12 周计划</strong><span class="save">省 40%</span></div>
+              <div class="plan-row"><span>长期跟踪和完整行动方案</span><span class="price">¥59</span></div>
+            </div>
+          </div>
+          <div class="trust">
+            <div>安全支付</div>
+            <div>可取消</div>
+            <div>结果说明</div>
+          </div>
+          <button class="cta">解锁完整计划</button>
+          <p class="secondary">付款后由服务端更新订阅状态，再重新拉取完整结果。</p>
+          <p class="legal">建议新增 `Offer` 或 `CheckoutIntent`：记录 offerId、价格、折扣、币种、实验版本。</p>
+        </section>
+      </article>
+    </main>
+  </body>
+</html>

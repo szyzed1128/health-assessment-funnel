@@ -15,13 +15,46 @@ h1 { margin: 20px 0 32px; font-size: 32px; line-height: 1.15; }
 .secondary-button:disabled { cursor: wait; opacity: 0.65; }
 .number-form { display: grid; gap: 16px; }
 .number-form label { display: grid; gap: 8px; color: #507866; font-size: 14px; font-weight: 700; }
-.number-form input { width: 100%; min-height: 54px; border: 1px solid #c9d8ce; border-radius: 6px; padding: 12px; }
+.field-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #507866; }
+.field-meta span:last-child { color: #617069; font-weight: 700; }
+.input-shell { position: relative; display: block; }
+.number-form input { width: 100%; min-height: 54px; border: 1px solid #c9d8ce; border-radius: 6px; padding: 12px 58px 12px 12px; color: #17221f; }
+.number-form input[type="date"] { padding-right: 12px; }
+.input-unit { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: #617069; font-size: 14px; font-weight: 700; pointer-events: none; }
+.date-input-group { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.date-part { display: flex; align-items: center; gap: 6px; min-width: 0; color: #617069; }
+.date-part input { min-width: 0; padding-right: 8px; }
+.date-part-short input { width: 100%; }
+.date-part span { flex: 0 0 auto; color: #507866; font-weight: 700; }
 .muted { color: #617069; line-height: 1.5; }
 .error-message { color: #b42318; line-height: 1.5; }
+.preview-message { margin: -12px 0 16px; color: #617069; font-size: 14px; line-height: 1.5; }
+.bmi-preview { margin: -12px 0 20px; padding: 14px 16px; border: 1px solid #c9d8ce; border-left: 4px solid #20704b; border-radius: 6px; background: #f7fbf8; color: #365b48; font-size: 14px; line-height: 1.5; }
+.bmi-preview p { margin: 8px 0 0; }
+.bmi-preview-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.bmi-preview-heading span { color: #20704b; font-weight: 700; }
+.preview-note { color: #617069; font-size: 13px; }
 .result-summary, .result-details { display: grid; gap: 0; margin: 24px 0; border-top: 1px solid #e3ece7; }
 .result-summary p, .result-details p { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; margin: 0; padding: 16px 0; border-bottom: 1px solid #e3ece7; line-height: 1.4; }
 .result-summary strong, .result-details strong { color: #507866; }
 .result-summary span, .result-details span { text-align: right; overflow-wrap: anywhere; }
+.bmi-gauge { margin: 0 0 24px; padding: 16px 0; border-bottom: 1px solid #e3ece7; }
+.bmi-gauge-heading, .bmi-scale-labels { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.bmi-gauge-heading strong { color: #507866; }
+.bmi-gauge-heading span { color: #17221f; font-weight: 700; }
+.bmi-scale { position: relative; display: grid; grid-template-columns: 17.3% 21.2% 15.4% 46.1%; height: 12px; margin: 14px 0 8px; overflow: visible; border-radius: 6px; }
+.bmi-segment:first-child { border-radius: 6px 0 0 6px; }
+.bmi-segment:nth-child(4) { border-radius: 0 6px 6px 0; }
+.bmi-low { background: #f5c84b; }
+.bmi-normal { background: #2f855a; }
+.bmi-high { background: #f59e0b; }
+.bmi-very-high { background: #d92d20; }
+.bmi-marker { position: absolute; top: 50%; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; background: #17221f; box-shadow: 0 2px 8px rgba(23, 34, 31, 0.25); transform: translate(-50%, -50%); }
+.bmi-scale-labels { color: #617069; font-size: 12px; }
+.bmi-note { margin: 10px 0 0; color: #617069; font-size: 13px; line-height: 1.5; }
+.goal-resolution-notice { margin: -12px 0 20px; padding: 18px 16px; border: 1px solid #e7c98b; border-left: 4px solid #c58b18; border-radius: 6px; background: #fffaf0; color: #5b481e; line-height: 1.5; }
+.goal-resolution-notice p { margin: 8px 0 16px; }
+.notice-actions { display: grid; gap: 10px; }
 .forecast-chart { margin: 8px 0 0; padding: 16px 0; border-bottom: 1px solid #e3ece7; }
 .forecast-heading, .forecast-labels { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .forecast-heading strong { color: #507866; }

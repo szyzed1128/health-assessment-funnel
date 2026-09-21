@@ -2,6 +2,9 @@ export type PersistedHealthResult = {
   bmi: number;
   recommendedDailyCalories: number;
   targetDate: Date;
+  requestedTargetDate: Date | null;
+  targetDateSource: "SYSTEM" | "IMPORTANT_DATE";
+  forecastTargetDate: Date;
   weeklyForecast: unknown;
   actionPlan: unknown;
 };

@@ -5,7 +5,7 @@ import { GET as resultRoute } from "@/app/api/sessions/[sessionId]/result/route"
 import { paymentService, subscriptionService } from "@/infrastructure/application-services";
 import { prisma } from "@/infrastructure/db/prisma";
 
-async function createAssessedSession() {
+async function createAssessedSession(bmi = 26.57) {
   const session = await prisma.assessmentSession.create({ data: { status: "ASSESSED" } });
   await prisma.assessmentAnswer.createMany({
     data: [
@@ -16,9 +16,12 @@ async function createAssessedSession() {
   await prisma.healthAssessmentResult.create({
     data: {
       sessionId: session.id,
-      bmi: 26.57,
+      bmi,
       recommendedDailyCalories: 1534,
       targetDate: new Date("2026-05-21T00:00:00.000Z"),
+      requestedTargetDate: new Date("2026-05-28T00:00:00.000Z"),
+      targetDateSource: "IMPORTANT_DATE",
+      forecastTargetDate: new Date("2026-05-28T00:00:00.000Z"),
       weeklyForecast: { weeksToTarget: 20, points: [] },
       actionPlan: { focus: "consistent activity" },
       algorithmVersion: "v1-mifflin-simple",
@@ -49,8 +52,30 @@ describe("subscription authorization and mock payment", () => {
     });
     expect(body.data).not.toHaveProperty("recommendedDailyCalories");
     expect(body.data).not.toHaveProperty("targetDate");
+    expect(body.data).not.toHaveProperty("requestedTargetDate");
+    expect(body.data).not.toHaveProperty("targetDateSource");
+    expect(body.data).not.toHaveProperty("forecastTargetDate");
     expect(body.data).not.toHaveProperty("weeklyForecast");
     expect(body.data).not.toHaveProperty("actionPlan");
+  });
+
+  it("uses the same Chinese BMI boundaries as the assessment preview", async () => {
+    const highSession = await createAssessedSession(24.5);
+    const highResponse = await resultRoute(
+      new Request(`http://localhost/api/sessions/${highSession.id}/result`),
+      { params: Promise.resolve({ sessionId: highSession.id }) },
+    );
+    const highBody = await highResponse.json();
+
+    const veryHighSession = await createAssessedSession(28.5);
+    const veryHighResponse = await resultRoute(
+      new Request(`http://localhost/api/sessions/${veryHighSession.id}/result`),
+      { params: Promise.resolve({ sessionId: veryHighSession.id }) },
+    );
+    const veryHighBody = await veryHighResponse.json();
+
+    expect(highBody.data.summary).toBe("您的 BMI 高于成人常用参考范围。");
+    expect(veryHighBody.data.summary).toBe("您的 BMI 明显高于成人常用参考范围。");
   });
 
   it("activates access after payment and keeps a repeated event idempotent", async () => {
@@ -61,7 +86,13 @@ describe("subscription authorization and mock payment", () => {
     const secondResult = await paymentService.pay(session.id, eventId);
 
     expect(firstResult).toMatchObject({ access: "MEMBER", recommendedDailyCalories: 1534 });
-    expect(secondResult).toMatchObject({ access: "MEMBER", targetDate: new Date("2026-05-21T00:00:00.000Z") });
+    expect(secondResult).toMatchObject({
+      access: "MEMBER",
+      targetDate: new Date("2026-05-21T00:00:00.000Z"),
+      requestedTargetDate: new Date("2026-05-28T00:00:00.000Z"),
+      targetDateSource: "IMPORTANT_DATE",
+      forecastTargetDate: new Date("2026-05-28T00:00:00.000Z"),
+    });
     expect(await prisma.paymentEvent.count({ where: { sessionId: session.id } })).toBe(1);
     expect(await prisma.subscription.count({ where: { sessionId: session.id, status: "ACTIVE" } })).toBe(1);
 

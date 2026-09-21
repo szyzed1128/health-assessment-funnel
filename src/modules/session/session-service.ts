@@ -1,5 +1,14 @@
-import { getNextStep, isAssessmentComplete, requiredQuestionKeys } from "@/modules/assessment/question-definition";
+import {
+  getNextQuestionKey,
+  getNextStep,
+  isAssessmentComplete,
+} from "@/modules/assessment/question-definition";
+import {
+  getWeightGoalValidationError,
+  normalizeGoal,
+} from "@/modules/health/health-assessment-algorithm";
 import type { PersistedAnswer, PersistedSession, SessionRepository } from "@/modules/session/session-repository";
+import { getTargetDateBounds, isValidIsoDate } from "@/shared/date-utils";
 import { NotFoundError, ValidationError } from "@/shared/errors/domain-error";
 
 export type SessionProgress = {
@@ -8,6 +17,7 @@ export type SessionProgress = {
   currentStep: number;
   nextQuestionKey: string | null;
   answers: Record<string, unknown>;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -16,26 +26,26 @@ export function toSessionProgress(
   answers: PersistedAnswer[],
 ): SessionProgress {
   const answerMap = Object.fromEntries(answers.map((answer) => [answer.questionKey, answer.value]));
-  const nextQuestionKey = requiredQuestionKeys.find((questionKey) => !(questionKey in answerMap)) ?? null;
 
   return {
     sessionId: session.id,
     status: session.status,
     currentStep: session.currentStep,
-    nextQuestionKey,
+    nextQuestionKey: getNextQuestionKey(answerMap),
     answers: answerMap,
+    createdAt: session.createdAt,
     updatedAt: session.updatedAt,
   };
 }
 
 export function deriveSessionState(answers: PersistedAnswer[]): Pick<PersistedSession, "currentStep" | "status"> {
   validateAnswerRelationships(answers);
-  const answeredQuestionKeys = answers.map((answer) => answer.questionKey);
-  const currentStep = getNextStep(answeredQuestionKeys);
+  const answerMap = Object.fromEntries(answers.map((answer) => [answer.questionKey, answer.value]));
+  const currentStep = getNextStep(answerMap);
 
   return {
     currentStep,
-    status: isAssessmentComplete(answeredQuestionKeys)
+    status: isAssessmentComplete(answerMap)
       ? "READY_FOR_ASSESSMENT"
       : "IN_PROGRESS",
   };
@@ -62,18 +72,37 @@ export function createSessionService(repository: SessionRepository) {
 function validateAnswerRelationships(answers: PersistedAnswer[]) {
   const values = new Map(answers.map((answer) => [answer.questionKey, answer.value]));
   const goal = values.get("goal");
+  const effectiveGoal = values.get("effectiveGoal");
+  const height = values.get("heightCm");
   const currentWeight = values.get("currentWeightKg");
   const targetWeight = values.get("targetWeightKg");
+  const bigDayType = values.get("bigDayType");
+  const bigDayDate = values.get("bigDayDate");
+  const targetDateSource = values.get("targetDateSource");
 
-  if (goal === "lose_weight" && typeof currentWeight === "number" && typeof targetWeight === "number") {
-    if (targetWeight >= currentWeight) {
-      throw new ValidationError("Target weight must be lower than current weight for a weight-loss goal.");
+  if (typeof currentWeight === "number" && typeof targetWeight === "number") {
+    const weightGoalError = getWeightGoalValidationError({
+      goal: normalizeGoal(effectiveGoal) ?? normalizeGoal(goal),
+      heightCm: typeof height === "number" ? height : undefined,
+      currentWeightKg: currentWeight,
+      targetWeightKg: targetWeight,
+    });
+    if (weightGoalError !== null) {
+      throw new ValidationError(weightGoalError);
     }
   }
 
-  if (goal === "maintain_weight" && typeof currentWeight === "number" && typeof targetWeight === "number") {
-    if (Math.abs(targetWeight - currentWeight) > 2) {
-      throw new ValidationError("Target weight must stay within 2 kg for a maintenance goal.");
+  if (bigDayType === "none" && targetDateSource === "important_date") {
+    throw new ValidationError("An important date is required when it is selected as the target date.");
+  }
+
+  if (typeof bigDayDate === "string") {
+    const bounds = getTargetDateBounds(new Date());
+    if (!isValidIsoDate(bigDayDate) || bigDayDate < bounds.min || bigDayDate > bounds.max) {
+      throw new ValidationError("Important date must be a real date from 14 to 730 days after today.");
     }
   }
+
+  // Missing dependent answers are allowed during out-of-order incremental saves.
+  // The health assessment boundary validates completeness before calculation.
 }

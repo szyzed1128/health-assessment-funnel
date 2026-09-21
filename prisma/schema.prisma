@@ -17,6 +17,7 @@ enum AssessmentAnswerType {
   SINGLE_SELECT
   MULTI_SELECT
   NUMBER
+  DATE
 }
 
 enum SubscriptionStatus {
@@ -28,6 +29,11 @@ enum SubscriptionStatus {
 enum PaymentStatus {
   SUCCEEDED
   FAILED
+}
+
+enum TargetDateSource {
+  SYSTEM
+  IMPORTANT_DATE
 }
 
 model AssessmentSession {
@@ -66,6 +72,9 @@ model HealthAssessmentResult {
   bmi                      Decimal? @db.Decimal(5, 2)
   recommendedDailyCalories Int?
   targetDate               DateTime?
+  requestedTargetDate      DateTime?
+  targetDateSource         TargetDateSource @default(SYSTEM)
+  forecastTargetDate       DateTime?
   weeklyForecast           Json?
   actionPlan               Json?
   algorithmVersion         String   @db.VarChar(32)

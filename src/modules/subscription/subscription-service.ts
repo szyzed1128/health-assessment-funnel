@@ -1,4 +1,5 @@
 import type { SubscriptionRepository } from "@/modules/subscription/subscription-repository";
+import { getBmiCategory } from "@/modules/health/health-assessment-algorithm";
 import { NotFoundError, ValidationError } from "@/shared/errors/domain-error";
 
 type ResultSummary = {
@@ -16,6 +17,9 @@ type MemberResult = ResultSummary & {
   access: "MEMBER";
   recommendedDailyCalories: number;
   targetDate: Date;
+  requestedTargetDate: Date | null;
+  targetDateSource: "SYSTEM" | "IMPORTANT_DATE";
+  forecastTargetDate: Date;
   weeklyForecast: unknown;
   actionPlan: unknown;
 };
@@ -53,6 +57,9 @@ export function createSubscriptionService(repository: SubscriptionRepository, no
         access: "MEMBER",
         recommendedDailyCalories: healthResult.recommendedDailyCalories,
         targetDate: healthResult.targetDate,
+        requestedTargetDate: healthResult.requestedTargetDate,
+        targetDateSource: healthResult.targetDateSource,
+        forecastTargetDate: healthResult.forecastTargetDate,
         weeklyForecast: healthResult.weeklyForecast,
         actionPlan: healthResult.actionPlan,
       };
@@ -70,8 +77,9 @@ function hasActiveSubscription(
 }
 
 function summarizeBmi(bmi: number) {
-  if (bmi < 18.5) return "您的 BMI 低于成人常用参考范围。";
-  if (bmi < 25) return "您的 BMI 位于成人常用参考范围内。";
-  if (bmi < 30) return "您的 BMI 高于成人常用参考范围。";
+  const category = getBmiCategory(bmi);
+  if (category === "LOW") return "您的 BMI 低于成人常用参考范围。";
+  if (category === "NORMAL") return "您的 BMI 位于成人常用参考范围内。";
+  if (category === "HIGH") return "您的 BMI 高于成人常用参考范围。";
   return "您的 BMI 明显高于成人常用参考范围。";
 }

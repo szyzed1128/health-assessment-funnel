@@ -7,6 +7,9 @@ const answers = {
   heightCm: 168,
   currentWeightKg: 75,
   targetWeightKg: 65,
+  bigDayType: "wedding",
+  bigDayDate: futureDateInput(140),
+  targetDateSource: "important_date",
   exerciseFrequency: "one_to_two_times_weekly",
 };
 
@@ -40,3 +43,9 @@ await request("/api/pay", {
 
 console.log(`Paid demo sessionId: ${session.sessionId}`);
 console.log(`Member result: ${baseUrl}/api/sessions/${session.sessionId}/result`);
+
+function futureDateInput(daysFromNow) {
+  const now = new Date();
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysFromNow));
+  return date.toISOString().slice(0, 10);
+}

@@ -114,6 +114,9 @@ describe("session API", () => {
             { questionKey: "heightCm", answerType: "NUMBER", value: 168 },
             { questionKey: "currentWeightKg", answerType: "NUMBER", value: 75 },
             { questionKey: "targetWeightKg", answerType: "NUMBER", value: 65 },
+            { questionKey: "bigDayType", answerType: "SINGLE_SELECT", value: "wedding" },
+            { questionKey: "bigDayDate", answerType: "DATE", value: futureDateInput(140) },
+            { questionKey: "targetDateSource", answerType: "SINGLE_SELECT", value: "important_date" },
             { questionKey: "exerciseFrequency", answerType: "SINGLE_SELECT", value: "one_to_two_times_weekly" },
           ],
         },
@@ -122,6 +125,8 @@ describe("session API", () => {
             bmi: 26.57,
             recommendedDailyCalories: 1534,
             targetDate: new Date("2026-05-21T00:00:00.000Z"),
+            targetDateSource: "SYSTEM",
+            forecastTargetDate: new Date("2026-05-21T00:00:00.000Z"),
             weeklyForecast: { weeksToTarget: 20, points: [] },
             algorithmVersion: "v1-mifflin-simple",
           },
@@ -150,3 +155,9 @@ describe("session API", () => {
     });
   });
 });
+
+function futureDateInput(daysFromNow: number) {
+  const now = new Date();
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysFromNow));
+  return date.toISOString().slice(0, 10);
+}

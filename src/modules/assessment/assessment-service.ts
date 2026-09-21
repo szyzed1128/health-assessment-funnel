@@ -1,7 +1,21 @@
-import type { AssessmentRepository } from "@/modules/assessment/assessment-repository";
+import type {
+  AssessmentRepository,
+  DerivedAnswerSync,
+} from "@/modules/assessment/assessment-repository";
 import { deriveSessionState, toSessionProgress, type SessionProgress } from "@/modules/session/session-service";
-import { getQuestionDefinition, isQuestionKey, type QuestionKey } from "@/modules/assessment/question-definition";
+import {
+  getQuestionDefinition,
+  isQuestionKey,
+  questionDefinitions,
+  type QuestionKey,
+} from "@/modules/assessment/question-definition";
+import {
+  calculateBmiPreview,
+  getWeightGoalValidationError,
+  type Goal,
+} from "@/modules/health/health-assessment-algorithm";
 import { NotFoundError, ValidationError } from "@/shared/errors/domain-error";
+import type { SessionWithAnswers } from "@/modules/session/session-repository";
 
 export function createAssessmentService(repository: AssessmentRepository) {
   return {
@@ -30,6 +44,7 @@ export function createAssessmentService(repository: AssessmentRepository) {
           value: parsedValue.data,
         },
         deriveSessionState,
+        deriveAutomaticAnswers,
       );
 
       if (record.kind === "NOT_FOUND") {
@@ -39,4 +54,82 @@ export function createAssessmentService(repository: AssessmentRepository) {
       return toSessionProgress(record.record.session, record.record.answers);
     },
   };
+}
+
+function deriveAutomaticAnswers(
+  answers: SessionWithAnswers["answers"],
+  changedQuestionKey: string,
+): DerivedAnswerSync {
+  const answerMap = Object.fromEntries(answers.map((answer) => [answer.questionKey, answer.value]));
+  const parsedGoal = questionDefinitions.goal.schema.safeParse(answerMap.goal);
+  const parsedHeight = questionDefinitions.heightCm.schema.safeParse(answerMap.heightCm);
+  const parsedCurrentWeight = questionDefinitions.currentWeightKg.schema.safeParse(answerMap.currentWeightKg);
+  const shouldReconcile =
+    changedQuestionKey === "goal" ||
+    changedQuestionKey === "heightCm" ||
+    changedQuestionKey === "currentWeightKg";
+
+  if (!shouldReconcile && changedQuestionKey !== "goalResolutionConfirmed") {
+    return { upserts: [], deleteQuestionKeys: [] };
+  }
+
+  if (!parsedGoal.success || !parsedHeight.success || !parsedCurrentWeight.success) {
+    return {
+      upserts: [],
+      deleteQuestionKeys: shouldReconcile
+        ? ["effectiveGoal", "goalResolution", "goalResolutionConfirmed"]
+        : [],
+    };
+  }
+
+  const goal = parsedGoal.data as Goal;
+  const preview = calculateBmiPreview({
+    goal,
+    heightCm: parsedHeight.data,
+    currentWeightKg: parsedCurrentWeight.data,
+  });
+
+  const deleteQuestionKeys = shouldReconcile
+    ? ["effectiveGoal", "goalResolution", "goalResolutionConfirmed"]
+    : [];
+  const existingTargetWeight = answerMap.targetWeightKg;
+  if (
+    shouldReconcile &&
+    typeof existingTargetWeight === "number" &&
+    preview.autoFillTargetWeightKg === null &&
+    getWeightGoalValidationError({
+      goal: preview.effectiveGoal,
+      heightCm: parsedHeight.data,
+      currentWeightKg: parsedCurrentWeight.data,
+      targetWeightKg: existingTargetWeight,
+    }) !== null
+  ) {
+    deleteQuestionKeys.push("targetWeightKg");
+  }
+  const upserts: DerivedAnswerSync["upserts"] = [
+    {
+      questionKey: "effectiveGoal",
+      answerType: "SINGLE_SELECT" as const,
+      value: preview.effectiveGoal,
+    },
+    {
+      questionKey: "goalResolution",
+      answerType: "SINGLE_SELECT" as const,
+      value: preview.goalResolution,
+    },
+  ];
+
+  if (preview.autoFillTargetWeightKg !== null) {
+    upserts.push({
+      questionKey: "targetWeightKg",
+      answerType: questionDefinitions.targetWeightKg.answerType,
+      value: preview.autoFillTargetWeightKg,
+    });
+  }
+
+  if (changedQuestionKey === "goalResolutionConfirmed") {
+    return { upserts, deleteQuestionKeys: [] };
+  }
+
+  return { upserts, deleteQuestionKeys };
 }
