@@ -70,7 +70,8 @@ npm run dev
 | `GET /api/sessions/:sessionId/bmi-preview` | 在身高和当前体重已保存后，返回服务端 BMI 预览及目标体重建议；这不是最终评估结果。 |
 | `POST /api/sessions/:sessionId/assessment` | 根据已持久化答案在服务端计算 BMI、建议摄入量、系统目标预测日期、重要日期来源和预测点，并持久化结果。 |
 | `GET /api/sessions/:sessionId/result` | 按 `subscription_status` 返回免费脱敏结果或会员完整结果。 |
-| `POST /api/pay` | 校验模拟支付码后，原子地记录支付事件并启用 30 天会员状态。 |
+| `POST /pay` | PRD 字面要求的模拟支付回调入口，校验模拟支付码后，原子地记录支付事件并启用 30 天会员状态。 |
+| `POST /api/pay` | 与 `/pay` 复用同一套支付逻辑，供前端内部调用。 |
 
 免费结果只包含 BMI、摘要、目标体重差与升级提示。会员结果才返回建议摄入量、重要日期、日期来源、实际预测参考日期、系统预计日期和每周预测点；前端也不会为免费用户渲染预测趋势。
 
@@ -83,6 +84,8 @@ curl -X POST http://localhost:3000/api/pay \
   -H "content-type: application/json" \
   -d '{"sessionId":"替换为已评估的 sessionId","paymentEventId":"替换为新的 UUID","paymentCode":"RQKJ-DEMO-2026"}'
 ```
+
+也可以按 PRD 字面路径调用 `http://localhost:3000/pay`，请求体完全相同。
 
 支付码错误时不会创建支付事件，也不会激活会员。重复使用同一个 `paymentEventId` 且 Session 相同是幂等的；复用于其他 Session 会返回 `409 CONFLICT`。
 
@@ -105,7 +108,7 @@ npm test
 
 该命令会先准备隔离的 `health_assessment_test` 数据库，再依次运行：
 
-- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付码校验、支付幂等与冲突。目前 10 个文件、75 项测试通过。
+- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付码校验、支付幂等与冲突。目前 10 个文件、76 项测试通过。
 - Playwright：浏览器端完成测评、刷新恢复、独立免费结果页、模拟支付页、支付解锁会员结果、预测趋势展示、保持体重自动跳过、日期校验与重新开始。目前 4 项测试通过。
 
 尚未覆盖真实第三方支付网关或真实生产网络故障，因为 PRD 明确要求的是模拟 `/pay` 回调；支付事件的幂等、冲突和事务路径已覆盖。

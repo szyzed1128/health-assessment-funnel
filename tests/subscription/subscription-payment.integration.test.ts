@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { POST as payRoute } from "@/app/api/pay/route";
+import { POST as rootPayRoute } from "@/app/pay/route";
 import { GET as resultRoute } from "@/app/api/sessions/[sessionId]/result/route";
 import { paymentService, subscriptionService } from "@/infrastructure/application-services";
 import { prisma } from "@/infrastructure/db/prisma";
@@ -150,5 +151,22 @@ describe("subscription authorization and mock payment", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).data.access).toBe("MEMBER");
     expect((await subscriptionService.getVisibleResult(session.id)).access).toBe("MEMBER");
+  });
+
+  it("supports the PRD root /pay callback path with the same payment logic", async () => {
+    const session = await createAssessedSession();
+    const response = await rootPayRoute(new Request("http://localhost/pay", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        sessionId: session.id,
+        paymentEventId: "6a1de9a8-cd6d-4d84-b6f8-f36ae2ce9972",
+        paymentCode: mockPaymentCode,
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.access).toBe("MEMBER");
+    expect(await prisma.subscription.count({ where: { sessionId: session.id, status: "ACTIVE" } })).toBe(1);
   });
 });

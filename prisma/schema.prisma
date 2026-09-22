@@ -69,13 +69,13 @@ model AssessmentAnswer {
 model HealthAssessmentResult {
   id                       String   @id @default(uuid()) @db.Uuid
   sessionId                String   @unique @db.Uuid
-  bmi                      Decimal? @db.Decimal(5, 2)
-  recommendedDailyCalories Int?
-  targetDate               DateTime?
+  bmi                      Decimal  @db.Decimal(5, 2)
+  recommendedDailyCalories Int
+  targetDate               DateTime
   requestedTargetDate      DateTime?
   targetDateSource         TargetDateSource @default(SYSTEM)
-  forecastTargetDate       DateTime?
-  weeklyForecast           Json?
+  forecastTargetDate       DateTime
+  weeklyForecast           Json
   actionPlan               Json?
   algorithmVersion         String   @db.VarChar(32)
   computedAt               DateTime @default(now())
