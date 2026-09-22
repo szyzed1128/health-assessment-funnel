@@ -1,5 +1,7 @@
 # 健康测评系统
 
+[![CI](https://github.com/szyzed1128/health-assessment-funnel/actions/workflows/ci.yml/badge.svg)](https://github.com/szyzed1128/health-assessment-funnel/actions/workflows/ci.yml)
+
 一个支持分步保存、断点恢复、服务端健康评估、订阅权限控制与模拟支付闭环的健康测评 Funnel。
 
 本项目以腾讯文档《【睿迄科技】全栈开发 2 天挑战》为唯一需求依据。实施状态与尚未解决事项见 [PENDING_ISSUES.md](PENDING_ISSUES.md)。
@@ -9,7 +11,7 @@
 | PRD 交付物 | 当前状态 |
 | --- | --- |
 | 公网演示链接 | 尚未发布。需要配置实际部署平台与 PostgreSQL 环境后发布，发布前不得视为完成。 |
-| GitHub 仓库链接与 CI 通过状态 | 本工作区尚未关联 GitHub 仓库；`.github/workflows/ci.yml` 已配置，推送后会运行。CI 在 PRD 中属于加分项，但本项目按用户验收要求必须完成。 |
+| GitHub 仓库链接与 CI 通过状态 | [GitHub 仓库](https://github.com/szyzed1128/health-assessment-funnel)；[CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162)。 |
 | `/pay` 可重放调用 | 已提供，见“模拟支付回放”。 |
 | 已支付测试 Session | 本地验收 Session：`5982b21d-ea29-4948-a600-447a9da15809`。使用 `npm run demo:paid-session` 可对目标环境生成随机、独立的已支付 Session；发布后应将实际输出的公网 ID 写入本节。 |
 | 数据库 Schema 图 | 已提供，见“数据模型”。 |
@@ -113,7 +115,7 @@ npm test
 
 尚未覆盖真实第三方支付网关或真实生产网络故障，因为 PRD 明确要求的是模拟 `/pay` 回调；支付事件的幂等、冲突和事务路径已覆盖。
 
-CI 定义在 `.github/workflows/ci.yml`，在 GitHub 的 push 与 pull request 上执行依赖安装、Chromium 安装、类型检查、Lint 和同一条 `npm test`。CI 在 PRD 中属于加分项，但本项目按用户验收要求必须完成；在仓库推送前不存在真实通过状态。
+CI 定义在 `.github/workflows/ci.yml`，在 GitHub 的 push 与 pull request 上执行依赖安装、Chromium 安装、类型检查、Lint 和同一条 `npm test`。[一次完整 CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162)。
 
 ## 数据模型
 

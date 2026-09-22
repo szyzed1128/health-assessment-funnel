@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-- 总体状态：核心代码已完成，本地验证通过；外部交付项进行中。
+- 总体状态：核心代码与 GitHub CI 已完成；公网部署与线上验收进行中。
 - 当前阶段：阶段 5 - 质量、CI、部署与交付证据。
 - 最后更新：2026-09-22
 - 需求基线：[PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md)
@@ -28,7 +28,7 @@
 | G2. 规范 API 与可扩展数据库模型 | 已完成 | 阶段 0-1 | API 文档、Prisma schema/migration、校验测试、Schema 图 |
 | G3. 服务端健康评估与结果持久化 | 已完成 | 阶段 2 | 算法单测、结果持久化测试、边界测试 |
 | G4. 订阅鉴权与模拟支付闭环 | 已完成 | 阶段 3 | 权限对照测试、支付码校验、支付幂等测试、端到端升级测试 |
-| G5. 自动化测试与持续验证 | 部分完成 | 阶段 5 | `npm test` 本地通过；GitHub Actions 配置已完成；真实 Actions 通过记录待 GitHub 仓库 |
+| G5. 自动化测试与持续验证 | 已完成 | 阶段 5 | `npm test` 本地通过；GitHub Actions 已真实通过 |
 
 ## 当前 PRD 对齐结论
 
@@ -40,7 +40,7 @@
 | 免费/会员差异化 API | 满足 | 非会员响应采用 allow-list，不返回 `weeklyForecast`、`recommendedDailyCalories`、`targetDate`、`requestedTargetDate`、`actionPlan` |
 | 模拟支付 `/pay` | 满足 | 根路径 `/pay` 与内部 `/api/pay` 复用同一套支付逻辑；正确支付码才会记录支付事件并激活订阅；错误支付码不落库；重复事件幂等、跨 Session 冲突拒绝 |
 | 一键测试 | 满足 | `npm test` 同时运行 Vitest 与 Playwright |
-| CI 加分项 | 本地配置已完成，外部状态待补 | `.github/workflows/ci.yml` 已存在；需推送 GitHub 后取得真实通过状态 |
+| CI 加分项 | 已满足 | [GitHub Actions 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162) |
 | 公网演示 URL | 未完成 | 需要部署平台和线上 PostgreSQL |
 | 已支付公网测试 Session | 未完成 | 本地已有测试 ID；公网发布后需用 `BASE_URL=... npm run demo:paid-session` 重新生成 |
 | README 环境变量说明 | 已完成 | README 已补充 `DATABASE_URL` 说明 |
@@ -56,7 +56,7 @@
 | 支付闭环 | 已完成 | `/pay` 支付码校验、支付事件幂等、冲突测试、支付后结果升级 |
 | 状态与异常 | 已完成 | 刷新恢复、重复/乱序/并发写入、结果作废重算测试 |
 | 测试与质量 | 已完成 | `npm test` 本地通过：Vitest 76 个测试、Playwright 4 条 E2E |
-| CI | 部分完成 | workflow 文件已完成；真实 Actions 通过状态待 GitHub 仓库 |
+| CI | 已完成 | workflow 文件已完成，真实 Actions 运行已通过 |
 | AI 协作效率 | 已完成 | README 已记录 AI 使用复盘和一次被修正的建议 |
 
 ## 最新验证记录
@@ -70,14 +70,13 @@
 | 2026-09-22 | BMI 目标分流回归 | `npm run test:unit`、`npm run test:e2e` | 通过；保持体重按 BMI 低/正常/偏高分流，重定向提示页可恢复，直接低 BMI 减重被服务端拒绝，增重目标区间由服务端校验 |
 | 2026-09-22 | 结果页与模拟支付页拆分 | `npm run typecheck`、`npm run lint`、`npm test` | 通过；`/result` 只读服务端结果接口，`/checkout` 输入支付码后调用 `/api/pay` 修改订阅状态 |
 | 2026-09-22 | `/pay` 兼容与评估结果非空约束 | `npm run typecheck`、`npm run lint`、`npm test`、`npm run build` | 通过；根路径 `/pay` 复用支付逻辑，`HealthAssessmentResult` 的 BMI、建议摄入量、系统目标日期、实际预测参考日期和预测曲线改为数据库非空 |
+| 2026-09-22 | GitHub Actions 首次真实运行 | [CI run 35675226740](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675226740)、[修复后 CI run 35675508162](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162) | 修复 Prisma generate 缺少 `DATABASE_URL` 的 workflow 配置问题后，依赖安装、Playwright、PostgreSQL、类型检查、Lint 和 `npm test` 全部通过 |
 
 ## 剩余推进项
 
-1. 创建或关联 GitHub 仓库，推送当前代码。
-2. 等 GitHub Actions 跑完后，把 README 中的 CI 状态改为真实 badge 或 workflow 链接。
-3. 选择部署平台并配置线上 PostgreSQL。
-4. 部署成功后，把公网演示 URL 写入 README。
-5. 对公网环境运行 `BASE_URL=https://你的公网域名 npm run demo:paid-session`，将输出的已支付公网 `sessionId` 写入 README。
+1. 选择部署平台并配置线上 PostgreSQL。
+2. 部署成功后，把公网演示 URL 写入 README。
+3. 对公网环境运行 `BASE_URL=https://你的公网域名 npm run demo:paid-session`，将输出的已支付公网 `sessionId` 写入 README。
 
 ## 风险与决策记录
 
