@@ -62,7 +62,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 cp deploy.env.example .env
 ```
 
-然后修改 `.env` 后再次执行部署命令。若服务器拉取 Docker Hub 镜像较慢或失败，可在 `.env` 中把 `NODE_IMAGE` 与 `POSTGRES_IMAGE` 切换到可访问的镜像源，例如 `docker.m.daocloud.io/library/node:24-bookworm-slim` 与 `docker.m.daocloud.io/library/postgres:16-alpine`。
+然后修改 `.env` 后再次执行部署命令。若服务器拉取 Docker Hub 镜像较慢或失败，可在 `.env` 中把 `NODE_IMAGE` 与 `POSTGRES_IMAGE` 切换到可访问的镜像源，例如 `docker.m.daocloud.io/library/node:24-bookworm-slim` 与 `docker.m.daocloud.io/library/postgres:16-alpine`。若构建卡在 Debian `apt-get update`，可同时设置 `DEBIAN_MIRROR=http://mirrors.cloud.aliyuncs.com/debian` 与 `DEBIAN_SECURITY_MIRROR=http://mirrors.cloud.aliyuncs.com/debian-security`。
 
 生产部署不需要提交 `node_modules`、`.next` 或 `.env`；镜像构建会通过 `package-lock.json` 安装依赖，通过 `prisma/schema.prisma` 生成 Prisma Client，并在容器启动时执行 `npm run db:deploy`。
 
