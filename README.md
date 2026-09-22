@@ -10,10 +10,12 @@
 
 | PRD 交付物 | 当前状态 |
 | --- | --- |
-| 公网演示链接 | http://47.110.230.230:3000 |
-| GitHub 仓库链接与 CI 通过状态 | [GitHub 仓库](https://github.com/szyzed1128/health-assessment-funnel)；[CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743)。 |
+| 公网演示链接 | [http://47.110.230.230:3000](http://47.110.230.230:3000)；从该地址可以从头完成 Funnel、进入免费结果页并打开模拟支付页。 |
+| 已支付会员结果预览 | [直接查看线上会员完整结果](http://47.110.230.230:3000/result?sessionId=a27349cb-7644-4844-94a8-574c58c03d81)；该 Session 已完成支付，打开后可直接预览会员结果，不需要再次支付。 |
+| GitHub 仓库链接与 CI 通过状态 | [GitHub 仓库](https://github.com/szyzed1128/health-assessment-funnel)；[最新 CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35687684067)。 |
 | `/pay` 可重放调用 | 已提供，见“模拟支付回放”。 |
-| 已支付测试 Session | 公网验收 Session：`a27349cb-7644-4844-94a8-574c58c03d81`；会员结果页：`http://47.110.230.230:3000/result?sessionId=a27349cb-7644-4844-94a8-574c58c03d81`。本地历史验收 Session：`5982b21d-ea29-4948-a600-447a9da15809`。 |
+| 已支付测试 Session | `a27349cb-7644-4844-94a8-574c58c03d81`；对应的会员结果页见上方“已支付会员结果预览”。 |
+| 模拟支付码 | `RQKJ-DEMO-2026` 是本项目固定的演示支付码，不是真实支付凭证；在 `/checkout?sessionId=...` 页面输入后，服务端验证通过才会激活该 Session 的 30 天模拟会员状态。 |
 | 数据库 Schema 图 | 已提供，见“数据模型”。 |
 | AI 使用复盘 | 已提供，见“AI 使用复盘”。 |
 
@@ -74,7 +76,7 @@ docker compose -f docker-compose.prod.yml logs -f app
 docker compose -f docker-compose.prod.yml down
 ```
 
-完成测评后会进入 `http://localhost:3000/result?sessionId=...`。该页面只读取后端结果接口：数据库订阅状态为非会员时显示免费脱敏结果，支付成功后同一个 `sessionId` 才会显示会员完整报告。免费结果页的解锁入口会进入 `http://localhost:3000/checkout?sessionId=...`，本地演示支付码为 `RQKJ-DEMO-2026`。
+完成测评后会进入 `http://localhost:3000/result?sessionId=...`。该页面只读取后端结果接口：数据库订阅状态为非会员时显示免费脱敏结果，支付成功后同一个 `sessionId` 才会显示会员完整报告。免费结果页的解锁入口会进入 `http://localhost:3000/checkout?sessionId=...`，演示支付码为 `RQKJ-DEMO-2026`。
 
 本项目不允许降级策略：不得用 SQLite、内存或仅前端存储替代 PostgreSQL/Prisma；不得把评估、订阅判断、字段过滤或支付成功判断移到前端；不得以 mock 数据或手工点击替代核心自动化测试。
 
@@ -105,6 +107,14 @@ docker compose -f docker-compose.prod.yml down
 
 ## 模拟支付回放
 
+`RQKJ-DEMO-2026` 是专门用于本项目验收的固定模拟支付码，不对应真实支付或真实扣款。面试官可以从公网首页走完测评，在免费结果页点击解锁进入支付页，填入该支付码并确认；后端会校验支付码、记录支付事件、将当前 Session 的订阅状态改为有效，再返回会员完整结果。输入其他支付码不会激活会员。
+
+线上已准备好一个可直接查看的会员结果 Session：
+
+- 会员结果页：[http://47.110.230.230:3000/result?sessionId=a27349cb-7644-4844-94a8-574c58c03d81](http://47.110.230.230:3000/result?sessionId=a27349cb-7644-4844-94a8-574c58c03d81)
+- Session ID：`a27349cb-7644-4844-94a8-574c58c03d81`
+- 该 Session 已在服务器数据库中完成评估并支付，可用于直接预览会员完整报告；如需验证非会员与会员差异，请从公网首页新建 Session，先查看免费结果，再进入支付页输入 `RQKJ-DEMO-2026`。
+
 先完成 Session 的所有答案并调用评估接口，再使用唯一的 `paymentEventId` 调用：
 
 ```bash
@@ -124,7 +134,7 @@ npm run demo:paid-session
 BASE_URL=https://你的公网域名 npm run demo:paid-session
 ```
 
-命令会输出可直接查询会员结果的随机 `sessionId`。公网发布后，将该次输出粘贴到本 README 的“交付状态”表中，供验收直接访问。
+命令会输出可直接查询会员结果的随机 `sessionId`。如需重新生成独立验收数据，可将 `BASE_URL` 设置为公网地址；当前已准备好的线上 Session 已记录在本 README 的“交付状态”和本节上方。
 
 ## 测试与质量保障
 
@@ -136,12 +146,12 @@ npm test
 
 该命令会先准备隔离的 `health_assessment_test` 数据库，再依次运行：
 
-- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付码校验、支付幂等与冲突。目前 10 个文件、76 项测试通过。
+- Vitest：算法边界、非法输入、BMI 目标分流、分步保存与恢复、乱序/重复/并发写入、评估持久化、订阅脱敏、支付码校验、支付幂等与冲突。目前 11 个文件、79 项测试通过。
 - Playwright：浏览器端完成测评、刷新恢复、独立免费结果页、模拟支付页、支付解锁会员结果、预测趋势展示、保持体重自动跳过、日期校验与重新开始。目前 4 项测试通过。
 
 尚未覆盖真实第三方支付网关或真实生产网络故障，因为 PRD 明确要求的是模拟 `/pay` 回调；支付事件的幂等、冲突和事务路径已覆盖。
 
-CI 定义在 `.github/workflows/ci.yml`，在 GitHub 的 push 与 pull request 上执行依赖安装、Chromium 安装、类型检查、Lint 和同一条 `npm test`。[一次完整 CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743)。
+CI 定义在 `.github/workflows/ci.yml`，在 GitHub 的 push 与 pull request 上执行依赖安装、Chromium 安装、类型检查、Lint 和同一条 `npm test`。[最新一次完整 CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35687684067)。
 
 ## 数据模型
 
