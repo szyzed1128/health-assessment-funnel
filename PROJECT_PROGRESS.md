@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-- 总体状态：核心代码、GitHub CI 与一键 Docker 部署配置已完成；公网部署与线上验收进行中。
+- 总体状态：核心代码、GitHub CI、一键 Docker 部署配置、公网部署与线上验收均已完成。
 - 当前阶段：阶段 5 - 质量、CI、部署与交付证据。
 - 最后更新：2026-09-22
 - 需求基线：[PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md)
@@ -18,7 +18,7 @@
 | 2. 服务端健康评估 | 已完成 | 算法与边界测试完成 | BMI 预览、目标分流、BMI 建议区间、建议摄入量、系统预计日期、重要日期来源和预测点均由服务端计算或校验，正式结果持久化 |
 | 3. 订阅与模拟支付 | 已完成 | 权限隔离与幂等闭环经过测试 | 免费响应无受保护字段；`/pay` 校验模拟支付码后激活会员；重复事件幂等 |
 | 4. 用户 Funnel 与结果展示 | 已完成 | 可完成测评到会员解锁 | 中文前端、刷新恢复、BMI 预览、保持体重分流提示页、目标体重建议、重要日期选择、日期来源选择、独立结果页、独立模拟支付页、BMI 区间条、免费/会员结果、重开测评、非线性预测趋势展示 |
-| 5. 测试、CI、部署与交付 | 进行中 | `npm test`、GitHub Actions、线上演示均通过 | 本地 `npm test`、真实 GitHub Actions 与 Docker 一键部署配置已完成；公网演示 URL 待实际部署 |
+| 5. 测试、CI、部署与交付 | 已完成 | `npm test`、GitHub Actions、线上演示均通过 | 本地 `npm test`、真实 GitHub Actions、Docker 一键部署配置与公网部署均已完成 |
 
 ## PRD 阶段性目标看板
 
@@ -41,8 +41,8 @@
 | 模拟支付 `/pay` | 满足 | 根路径 `/pay` 与内部 `/api/pay` 复用同一套支付逻辑；正确支付码才会记录支付事件并激活订阅；错误支付码不落库；重复事件幂等、跨 Session 冲突拒绝 |
 | 一键测试 | 满足 | `npm test` 同时运行 Vitest 与 Playwright |
 | CI 加分项 | 已满足 | [GitHub Actions 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743) |
-| 公网演示 URL | 未完成 | 需要部署平台和线上 PostgreSQL |
-| 已支付公网测试 Session | 未完成 | 本地已有测试 ID；公网发布后需用 `BASE_URL=... npm run demo:paid-session` 重新生成 |
+| 公网演示 URL | 已完成 | http://47.110.230.230:3000 |
+| 已支付公网测试 Session | 已完成 | `a27349cb-7644-4844-94a8-574c58c03d81`；会员结果页 `http://47.110.230.230:3000/result?sessionId=a27349cb-7644-4844-94a8-574c58c03d81` |
 | README 环境变量说明 | 已完成 | README 已补充 `DATABASE_URL` 说明 |
 
 ## 评分维度追踪
@@ -73,13 +73,11 @@
 | 2026-09-22 | `/pay` 兼容与评估结果非空约束 | `npm run typecheck`、`npm run lint`、`npm test`、`npm run build` | 通过；根路径 `/pay` 复用支付逻辑，`HealthAssessmentResult` 的 BMI、建议摄入量、系统目标日期、实际预测参考日期和预测曲线改为数据库非空 |
 | 2026-09-22 | GitHub Actions 首次真实运行 | [CI run 35675226740](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675226740)、[修复后 CI run 35675508162](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162)、[最新 CI run 35675847743](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743) | 修复 Prisma generate 缺少 `DATABASE_URL` 的 workflow 配置问题后，依赖安装、Playwright、PostgreSQL、类型检查、Lint 和 `npm test` 全部通过 |
 | 2026-09-22 | 一键 Docker 部署配置 | `Dockerfile`、`docker-compose.prod.yml`、`deploy.env.example`；本地临时端口 `3010` 验证 | 从 GitHub clone 后可用一条 Docker Compose 命令启动生产服务；容器启动时自动执行 5 个 Prisma 迁移，Next.js 首页返回 `200`，不改变 PostgreSQL/Prisma 的正式持久化方案 |
+| 2026-09-22 | 阿里云公网部署 | `http://47.110.230.230:3000`、已支付公网 Session `a27349cb-7644-4844-94a8-574c58c03d81` | ECS Docker Compose 生产栈已启动；PostgreSQL 与 App 容器 healthy；服务器内部和公网首页均返回 `200`；会员结果接口返回 `MEMBER` 和完整预测数据 |
 
 ## 剩余推进项
 
-1. 选择云服务器，安装 Docker 与 Docker Compose。
-2. 执行 `docker compose -f docker-compose.prod.yml up -d --build` 部署当前版本，并验证公网 URL。
-3. 部署成功后，把公网演示 URL 写入 README。
-4. 对公网环境运行 `BASE_URL=https://你的公网域名 npm run demo:paid-session`，将输出的已支付公网 `sessionId` 写入 README。
+当前阶段 5 已完成。后续若继续优化 UI 或新增用户选项，需重新执行本地 `npm test`、等待 GitHub Actions 通过，并重新部署线上环境。
 
 ## 风险与决策记录
 

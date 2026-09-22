@@ -10,10 +10,10 @@
 
 | PRD 交付物 | 当前状态 |
 | --- | --- |
-| 公网演示链接 | 尚未发布。需要配置实际部署平台与 PostgreSQL 环境后发布，发布前不得视为完成。 |
+| 公网演示链接 | http://47.110.230.230:3000 |
 | GitHub 仓库链接与 CI 通过状态 | [GitHub 仓库](https://github.com/szyzed1128/health-assessment-funnel)；[CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743)。 |
 | `/pay` 可重放调用 | 已提供，见“模拟支付回放”。 |
-| 已支付测试 Session | 本地验收 Session：`5982b21d-ea29-4948-a600-447a9da15809`。使用 `npm run demo:paid-session` 可对目标环境生成随机、独立的已支付 Session；发布后应将实际输出的公网 ID 写入本节。 |
+| 已支付测试 Session | 公网验收 Session：`a27349cb-7644-4844-94a8-574c58c03d81`；会员结果页：`http://47.110.230.230:3000/result?sessionId=a27349cb-7644-4844-94a8-574c58c03d81`。本地历史验收 Session：`5982b21d-ea29-4948-a600-447a9da15809`。 |
 | 数据库 Schema 图 | 已提供，见“数据模型”。 |
 | AI 使用复盘 | 已提供，见“AI 使用复盘”。 |
 
