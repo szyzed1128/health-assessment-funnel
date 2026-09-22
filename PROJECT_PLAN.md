@@ -19,7 +19,7 @@
 4. 检查新增实现是否违反模块依赖、可扩展答案模型或“不允许降级策略”。
 5. 只有全部为“满足”且项目负责人 review 通过，才可将阶段从“待评审”改为“已完成”并开始下一阶段。
 
-当前代码已通过阶段 1、阶段 2、阶段 3 和阶段 4 的本地实现审查；历史阶段缺口已在后续更新中关闭。当前剩余推进重点是阶段 5 的外部交付证据：GitHub 仓库、真实 GitHub Actions 通过状态、公网部署、公网已支付测试 Session，以及 README 中对应链接更新。
+当前代码已通过阶段 1、阶段 2、阶段 3 和阶段 4 的实现审查，阶段 5 的自动化测试、CI、公网部署和交付文档也已完成；历史阶段缺口已在后续更新中关闭。当前仓库处于交付后的维护状态，后续代码改动必须重新运行测试、等待 CI 通过并重新部署。
 
 ## 模块化单体架构
 
@@ -229,14 +229,14 @@ Prisma / PostgreSQL
 - [x] 补齐单元测试、API 集成测试和关键流程端到端测试。
 - [x] 确保 `npm test` 一键通过。
 - [x] 添加 GitHub Actions，在 push 和 pull request 时执行安装、数据库准备和测试。
-- [ ] 在 README 加入 CI 徽章或 workflow 链接。（待 GitHub 仓库创建后补真实链接）
-- [ ] 部署 PostgreSQL 与应用，验证公网 URL。
+- [x] 在 README 加入 CI 徽章和 workflow 链接。
+- [x] 部署 PostgreSQL 与应用，验证公网 URL。
 - [x] 在 README 给出迁移、启动、测试、部署变量和模拟 `pay` 的 cURL 示例。
-- [ ] 创建一个已支付测试 `sessionId` 并记录在 README。（已有本地 ID；公网发布后需重新生成）
+- [x] 创建一个已支付测试 `sessionId` 并记录在 README。
 - [x] 添加数据库 Schema 图。
 - [x] 完成 AI 使用复盘，包括至少一次被否决/修正的建议及理由。
 
-完成定义：线上环境完整走通；CI 通过；审阅者可依据 README 复现核心流程与验证权限差异；PRD 阶段目标 G5 达成。
+完成定义：线上环境完整走通；CI 通过；README 可用于复现核心流程与验证权限差异；PRD 阶段目标 G5 达成。
 
 评分门槛：逐项核对需求文档的评分矩阵，确认每个评分维度对应的证据均已提交、可访问、可运行。
 
@@ -252,46 +252,10 @@ Prisma / PostgreSQL
 ## 变更规则
 
 若发现需求需要调整，先在 [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md) 记录原因、影响范围和替代方案，再更新本计划与需求文档。不得在未记录的情况下扩大范围。
-## Stage 1 Gate Update (2026-09-21)
+## 阶段门禁与交付更新（2026-09-22）
 
-The four prior Stage 1 gaps have been resolved: browser-side anonymous-session
-recovery, a multi-select answer model, repository boundaries, and cross-field
-weight validation. Typecheck, lint, unit/integration tests, and a production
-build all pass. The user-review gate remains mandatory: Stage 2 must not start
-until the project owner approves Stage 1.
-## Stage 1 and 2 Gate Update (2026-09-21)
-
-Stage 1 review passed after the malformed-JSON API validation edge was corrected.
-Stage 2 now has a pure `health` domain algorithm, a repository interface and
-Prisma implementation, atomic result persistence, and an assessment trigger API.
-The output is versioned and the calculation uses only answers stored by Stage 1.
-
-Stage 2 remains pending project-owner review. Do not begin subscription/payment
-work until that review is approved.
-## Stage 2 Review Passed (2026-09-21)
-
-Stage 2 passed review after its calorie-floor edge case was corrected. Its
-server-only algorithm, durable result/session association, result traceability,
-and tests meet the Stage 2 gate. The next work is Stage 3; it must establish
-the subscription and payment authorization boundary before a result-display UI
-can be treated as complete.
-## Stage 3 PRD Design Gate (2026-09-21)
-
-The Stage 3 PRD requirements and implementation boundaries are recorded in
-`STAGE3_DESIGN.md`. The implementation may begin only under those rules:
-server-side allow-list filtering, subscription as the only authorization source,
-atomic payment-event/subscription updates, unique event-id idempotency, and
-direct API tests proving protected fields are absent for free users.
-## Stage 3 Implementation Update (2026-09-21)
-
-Stage 3 implementation is ready for review. The server now exposes
-`GET /api/sessions/:sessionId/result` and `POST /api/pay` under the constraints
-in `STAGE3_DESIGN.md`. Tests prove the free response omits protected keys rather
-than hiding them in the UI, and that payment activation and payment-event retry
-are transactionally safe.
-## Stage 3 Review Passed (2026-09-21)
-
-Stage 3 passed review after adding the required free-tier upgrade prompt and
-post-payment result-route assertion. The next work remains Stage 4: integrate
-the assessed, free-result, payment, and member-result APIs into the actual
-mobile-first Funnel UI.
+- 阶段 1 审查已通过：匿名 Session、分步答案保存、刷新恢复、乱序/重复/并发行为和可扩展答案模型均已实现并测试。
+- 阶段 2 审查已通过：健康算法只读取数据库答案，在服务端计算并持久化 BMI、建议摄入量、目标日期和预测数据，边界测试已覆盖。
+- 阶段 3 审查已通过：结果接口只依据数据库订阅状态做字段 allow-list 过滤；`/pay` 与 `/api/pay` 均校验模拟支付码，并通过事务和幂等事件更新订阅。
+- 阶段 4 审查已通过：中文移动端 Funnel、刷新恢复、免费结果、独立模拟支付页和会员完整结果链路已完成；竞品式激励页仍属于 PRD 非核心可选项。
+- 阶段 5 已完成：`npm test`、GitHub Actions、Docker 一键部署、公网服务和 README 交付证据均已验证。
