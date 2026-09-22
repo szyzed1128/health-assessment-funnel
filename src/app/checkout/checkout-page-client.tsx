@@ -11,6 +11,7 @@ import {
   storeSessionId,
 } from "@/modules/session/browser-session";
 import { getClientErrorMessage } from "@/shared/client-error-message";
+import { createUuidV4 } from "@/shared/uuid";
 
 export default function CheckoutPageClient() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function CheckoutPageClient() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          paymentEventId: crypto.randomUUID(),
+          paymentEventId: createUuidV4(),
           paymentCode,
         }),
       });
