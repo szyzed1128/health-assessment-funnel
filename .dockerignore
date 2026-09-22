@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+!deploy.env.example
+coverage
+playwright-report
+test-results
+.tools
+src/generated/prisma
+*.tsbuildinfo
+qqdoc.png
+

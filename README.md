@@ -11,7 +11,7 @@
 | PRD 交付物 | 当前状态 |
 | --- | --- |
 | 公网演示链接 | 尚未发布。需要配置实际部署平台与 PostgreSQL 环境后发布，发布前不得视为完成。 |
-| GitHub 仓库链接与 CI 通过状态 | [GitHub 仓库](https://github.com/szyzed1128/health-assessment-funnel)；[CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162)。 |
+| GitHub 仓库链接与 CI 通过状态 | [GitHub 仓库](https://github.com/szyzed1128/health-assessment-funnel)；[CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743)。 |
 | `/pay` 可重放调用 | 已提供，见“模拟支付回放”。 |
 | 已支付测试 Session | 本地验收 Session：`5982b21d-ea29-4948-a600-447a9da15809`。使用 `npm run demo:paid-session` 可对目标环境生成随机、独立的已支付 Session；发布后应将实际输出的公网 ID 写入本节。 |
 | 数据库 Schema 图 | 已提供，见“数据模型”。 |
@@ -47,6 +47,32 @@ npm run dev
 ```
 
 打开 `http://localhost:3000`。浏览器会保存匿名 Session ID；刷新或重新打开页面会从后端恢复该会话的答案和进度。普通用户重新测评会生成新的随机 Session，不影响已有用户记录；若通过 API 更改已评估会话的答案，旧结果会在同一事务内作废，必须重新计算。
+
+## 一键 Docker 部署
+
+面试官或服务器从 GitHub 拉取源码后，只需要安装 Docker 与 Docker Compose，即可用一条命令同时启动 PostgreSQL、执行 Prisma 迁移并启动 Next.js 生产服务：
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+默认访问地址为 `http://服务器IP:3000`。如需修改端口、数据库名、用户名或密码，可先复制示例环境变量：
+
+```bash
+cp deploy.env.example .env
+```
+
+然后修改 `.env` 后再次执行部署命令。若服务器拉取 Docker Hub 镜像较慢或失败，可在 `.env` 中把 `NODE_IMAGE` 与 `POSTGRES_IMAGE` 切换到可访问的镜像源，例如 `docker.m.daocloud.io/library/node:24-bookworm-slim` 与 `docker.m.daocloud.io/library/postgres:16-alpine`。
+
+生产部署不需要提交 `node_modules`、`.next` 或 `.env`；镜像构建会通过 `package-lock.json` 安装依赖，通过 `prisma/schema.prisma` 生成 Prisma Client，并在容器启动时执行 `npm run db:deploy`。
+
+常用运维命令：
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs -f app
+docker compose -f docker-compose.prod.yml down
+```
 
 完成测评后会进入 `http://localhost:3000/result?sessionId=...`。该页面只读取后端结果接口：数据库订阅状态为非会员时显示免费脱敏结果，支付成功后同一个 `sessionId` 才会显示会员完整报告。免费结果页的解锁入口会进入 `http://localhost:3000/checkout?sessionId=...`，本地演示支付码为 `RQKJ-DEMO-2026`。
 
@@ -115,7 +141,7 @@ npm test
 
 尚未覆盖真实第三方支付网关或真实生产网络故障，因为 PRD 明确要求的是模拟 `/pay` 回调；支付事件的幂等、冲突和事务路径已覆盖。
 
-CI 定义在 `.github/workflows/ci.yml`，在 GitHub 的 push 与 pull request 上执行依赖安装、Chromium 安装、类型检查、Lint 和同一条 `npm test`。[一次完整 CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675508162)。
+CI 定义在 `.github/workflows/ci.yml`，在 GitHub 的 push 与 pull request 上执行依赖安装、Chromium 安装、类型检查、Lint 和同一条 `npm test`。[一次完整 CI 运行已通过](https://github.com/szyzed1128/health-assessment-funnel/actions/runs/35675847743)。
 
 ## 数据模型
 
